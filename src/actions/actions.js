@@ -1,4 +1,4 @@
-import { BLE_START, BLE_SCAN_START, BLE_SCAN_ENDED, FAKE_DEVICE } from '../constants';
+import { BLE_START, BLE_SCAN_START, BLE_SCAN_ENDED, BLE_CONNECT, FAKE_DEVICE } from '../constants';
 import BleManager from 'react-native-ble-manager';
 import { PermissionsAndroid } from 'react-native';
 
@@ -61,7 +61,6 @@ export function bleScanEnded() {
   return (dispatch) => {
     BleManager.getDiscoveredPeripherals([])
       .then((peripherals) => {
-        peripherals.push(FAKE_DEVICE);
         dispatch(bleScanResult(peripherals));
       })
       .catch((err) => {
@@ -71,8 +70,29 @@ export function bleScanEnded() {
 }
 
 // TODO CONNECT/DISCONNECT TO PERIPHERAL ACTIONS
-export function bleConnect() {
-  
+export function bleConnectResult(deviceID, data, error) {
+  return {
+    type: BLE_CONNECT,
+    connectedTo: {
+      id: deviceID,
+      data
+    },
+    error
+  }
+}
+
+export function bleConnect(deviceID) {
+  return (dispatch) => {
+    console.log('bleConnect', deviceID)
+    BleManager.connect(deviceID)
+      .then((data)=>{
+        dispatch(bleConnectResult(deviceID, data, null));
+      })
+      .catch((err) => {
+        console.log ('error connecting to peripheral', err);
+        dispatch(bleConnectResult(null, null, err));
+      })
+  }
 }
 
 export function bleDisconnect() {

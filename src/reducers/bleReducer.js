@@ -1,12 +1,14 @@
 // Template for redux data fetching reducer
 
-import { BLE_START, BLE_SCAN_START, BLE_SCAN_ENDED } from '../constants';
+import { BLE_START, BLE_SCAN_START, BLE_SCAN_ENDED, BLE_CONNECT } from '../constants';
 const initialState = {
   started: false,
   startError: null,
   scanning: false,
   scanError: null,
   peripherals: [],
+  connectError: null,
+  connectedTo: {id: 'foo', data: 'bar'},
 };
 
 export default function bleReducer (state = initialState, action) {
@@ -29,6 +31,12 @@ export default function bleReducer (state = initialState, action) {
         scanning: false,
         peripherals: action.peripherals,
       };
+    case BLE_CONNECT: 
+      return {
+        ...state,
+        connectedTo: action.connectedTo,
+        connectError: action.error,
+      };      
     default:
       return state;
   }

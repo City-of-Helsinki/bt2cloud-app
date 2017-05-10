@@ -8,7 +8,6 @@ const initialState = {
   scanError: null,
   peripherals: [],
   connectError: null,
-  connectedTo: {id: 'foo', data: 'bar'},
 };
 
 export default function bleReducer (state = initialState, action) {
@@ -31,10 +30,21 @@ export default function bleReducer (state = initialState, action) {
         scanning: false,
         peripherals: action.peripherals,
       };
-    case BLE_CONNECT: 
+    case BLE_CONNECT:
+      peripherals = state.peripherals;
+      // if connect success, modify connected peripheral to append its service&charac
+      // information and give it a connected=true flag
+      if (action.data) {
+        for (p in peripherals) {
+          if (peripherals[p].id === action.device.id) {
+            updated_p = Object.assign({}, peripherals[p], action.data);
+            peripherals[p] = updated_p;
+          }
+        }
+      }
       return {
         ...state,
-        connectedTo: action.connectedTo,
+        peripherals,
         connectError: action.error,
       };      
     default:

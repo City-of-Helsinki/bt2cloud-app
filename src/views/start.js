@@ -19,16 +19,14 @@ class Start extends Component {
 
 	componentDidMount() {
 		this.props.bleStart();
-		// this.handleDiscoverPeripheral = this.handleDiscoverPeripheral.bind(this);
+		this.handleDiscoverPeripheral = this.handleDiscoverPeripheral.bind(this);
 		this.handleScanEnded = this.handleScanEnded.bind(this);
 		NativeAppEventEmitter
 			.addListener('BleManagerStopScan', this.handleScanEnded);
-		NativeAppEventEmitter
-			.addListener('BleManagerConnectPeripheral', (args) => console.log('connect:', args.id));
 	}
 
-	handleDiscoverPeripheral(data) {
-		console.log('handleDiscoverPeripheral', data);
+	handleDiscoverPeripheral() {
+
 	}
 
 	handleScanEnded() {
@@ -40,16 +38,15 @@ class Start extends Component {
 		if (!scanning) this.props.bleScanStart();
 	}
 
-	handleConnectPress(deviceID) {
-		console.log('handleConnectPress', deviceID);
-		console.log(typeof deviceID);
-		this.props.bleConnect(deviceID);
+	handleConnectPress(device) {
+		console.log('handleConnectPress', device.id);
+		this.props.bleConnect(device);
 	}
 
 	render() {
 		let that = this;
 		let { started, startError, scanning, scanError, peripherals,
-			connectError, connectedTo } = this.props.ble;
+			connectError } = this.props.ble;
 		console.log(this.props.ble);
 
 		function scanText() {
@@ -60,10 +57,11 @@ class Start extends Component {
 		function renderFoundDevices() {
 			console.log(peripherals);
 			return peripherals.map((device)=> {
-				var sData = new Uint8Array(device.advertising);
-		    console.log(sData);
 				return (
-				<TouchableHighlight onPress={that.handleConnectPress.bind(that, device.id)} key={device.id} style={deviceBox}>
+				<TouchableHighlight 
+					onPress={that.handleConnectPress.bind(that, device)} 
+					key={device.id} 
+					style={[deviceBox, {backgroundColor: device.connected ? 'cyan' : 'white'}]}>
 					<View><Text style={textSmall}>Name: {device.name}</Text>
 					<Text style={textSmall}>ID: {device.id}</Text></View>
 				</TouchableHighlight>
@@ -75,7 +73,6 @@ class Start extends Component {
 			<View style={container}>
 				<ScrollView>
 					<View style={scrollView}>
-					{connectedTo && <Text>{JSON.stringify(connectedTo)}</Text>}
 					{connectError && <Text>{connectError}</Text>}
 					{renderFoundDevices()}
 					</View>
@@ -155,7 +152,7 @@ function mapDispatchToProps(dispatch) {
     bleStart: () => dispatch(bleStart()),
     bleScanStart: () => dispatch(bleScanStart()),
     bleScanEnded: () => dispatch(bleScanEnded()),
-    bleConnect: (id) => dispatch(bleConnect(id)),
+    bleConnect: (device) => dispatch(bleConnect(device)),
   };
 }
 

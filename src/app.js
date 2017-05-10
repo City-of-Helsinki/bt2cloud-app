@@ -6,17 +6,19 @@ import {
 
 import { connect } from 'react-redux';
 import { fetchData } from './actions/actions';
-import { Scene, Router } from 'react-native-router-flux';
+
+import ScrollableTabView from 'react-native-scrollable-tab-view';
+import TabBar from './components/TabBar';
 
 import Start from './views/start'
 
 const App = (props) => {
   return (
-    <Router>
-      <Scene key="root" hideNavBar={true} duration={1}>
-        <Scene key="Start" component={Start} title="Start" initial={true} />
-      </Scene>
-    </Router>
+    <ScrollableTabView renderTabBar={() => <TabBar someProp={'here'} />}>
+      <Start tabLabel="Scan&Connect" />
+      <Start tabLabel="Page 2" />
+      <Start tabLabel="Page 3" />
+    </ScrollableTabView>
   );
 }
 

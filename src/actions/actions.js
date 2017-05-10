@@ -38,7 +38,7 @@ export function bleScanStartResult(error) {
 
 export function bleScanStart() {
   return (dispatch) => {
-    BleManager.scan([], 3)
+    BleManager.scan([], 10)
       .then(() => {
         dispatch(bleScanStartResult());
       })
@@ -61,6 +61,9 @@ export function bleScanEnded() {
   return (dispatch) => {
     BleManager.getDiscoveredPeripherals([])
       .then((peripherals) => {
+        peripherals = peripherals.filter((p)=> {
+          return p.hasOwnProperty('name') && p.name.length > 0;
+        });
         dispatch(bleScanResult(peripherals));
       })
       .catch((err) => {
@@ -70,27 +73,26 @@ export function bleScanEnded() {
 }
 
 // TODO CONNECT/DISCONNECT TO PERIPHERAL ACTIONS
-export function bleConnectResult(deviceID, data, error) {
+export function bleConnectResult(device, data, error) {
   return {
     type: BLE_CONNECT,
-    connectedTo: {
-      id: deviceID,
-      data
-    },
-    error
+    device,
+    data,
+    error,
   }
 }
 
-export function bleConnect(deviceID) {
+export function bleConnect(device) {
   return (dispatch) => {
-    console.log('bleConnect', deviceID)
-    BleManager.connect(deviceID)
+    console.log('bleConnect', device.id)
+    BleManager.connect(device.id)
       .then((data)=>{
-        dispatch(bleConnectResult(deviceID, data, null));
+        data['connected'] = true;
+        dispatch(bleConnectResult(device, data, null));
       })
       .catch((err) => {
         console.log ('error connecting to peripheral', err);
-        dispatch(bleConnectResult(null, null, err));
+        dispatch(bleConnectResult(device, null, err));
       })
   }
 }

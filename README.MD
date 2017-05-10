@@ -10,8 +10,8 @@ Skip the "Starting the Android Virtual Device" section and instead follow the in
 
 Done? in the directory of your choice, run:
 
-```git clone git@github.com:City-of-Helsinki/bt2cloud-app.git
-npm install
-react-native run-android```
+> git clone git@github.com:City-of-Helsinki/bt2cloud-app.git
+> npm install
+> react-native run-android
 
 The app should launch on your device.

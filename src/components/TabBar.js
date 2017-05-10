@@ -8,7 +8,7 @@ import {
 } from 'react-native';
 import Button from './Button';
 
-// TODO: rewrite this component into a ES6 class based component
+// TODO: rewrite this component into a ES6 class based component for consistency
 
 const DefaultTabBar = React.createClass({
   propTypes: {

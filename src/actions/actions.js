@@ -1,4 +1,12 @@
-import { BLE_START, BLE_SCAN_START, BLE_SCAN_ENDED, BLE_CONNECT, FAKE_DEVICE } from '../constants';
+import { 
+  BLE_START, 
+  BLE_SCAN_START, 
+  BLE_SCAN_ENDED, 
+  BLE_CONNECT_ERROR,
+  BLE_UPDATE_CONNECTED_PERIPHERALS,
+  BLE_UPDATE_AVAILABLE_PERIPHERALS,
+  BLE_UPDATE_PERIPHERALS_WITH_SERVICES
+} from '../constants';
 import BleManager from 'react-native-ble-manager';
 import { PermissionsAndroid } from 'react-native';
 
@@ -38,7 +46,7 @@ export function bleScanStartResult(error) {
 
 export function bleScanStart() {
   return (dispatch) => {
-    BleManager.scan([], 10)
+    BleManager.scan([], 60)
       .then(() => {
         dispatch(bleScanStartResult());
       })
@@ -49,22 +57,72 @@ export function bleScanStart() {
   }
 }
 
-// STOPPED SCAN ACTIONS
-export function bleScanResult(peripherals) {
-  return {
-    type: BLE_SCAN_ENDED,
-    peripherals
+// MANUAL END SCAN
+export function bleScanStop() {
+  return (dispatch) => {
+    BleManager.stopScan()
+      .then(() => {
+        dispatch(bleScanEnded());
+      })
+      .catch((err) => {
+        console.log('scan end error');
+      });
   }
 }
 
+// SCAN ENDED
 export function bleScanEnded() {
+  return {
+    type: BLE_SCAN_ENDED,
+    scanning: false,
+  }
+}
+
+// CONNECT/DISCONNECT ERROR
+export function bleConnectError(error) {
+  return {
+    type: BLE_CONNECT_ERROR,
+    error,
+  }
+}
+
+// USER CONNECTS TO PERIPHERAL
+export function bleConnect(device) {
+  return (dispatch) => {
+    console.log('bleConnect', device.id)
+    BleManager.connect(device.id)
+      .then((data)=>{
+        console.log ('got data: ', data);
+        dispatch(bleUpdatePeripheralsWithServices(data));
+      })
+      .catch((err) => {
+        console.log ('error connecting to peripheral', err);
+        dispatch(bleConnectError(err));
+      })
+  }
+}
+
+export function bleDisconnect(device) {
+  return (dispatch) => {
+    BleManager.disconnect(device.id)
+      .then((data)=>{
+        dispatch(getConnectedPeripherals());
+      })
+      .catch((err) => {
+        console.log ('error disconnecting from peripheral', err);
+        dispatch(bleConnectError(err));
+      })
+  }  
+}
+
+// REFRESH AVAILABLE PERIPHERALS
+export function getAvailablePeripherals() {
   return (dispatch) => {
     BleManager.getDiscoveredPeripherals([])
       .then((peripherals) => {
-        peripherals = peripherals.filter((p)=> {
-          return p.hasOwnProperty('name') && p.name.length > 0;
-        });
-        dispatch(bleScanResult(peripherals));
+        console.log('Available: ', peripherals);
+        peripherals = peripherals.filter(p=> p.hasOwnProperty('name') && p.name.length > 0);
+        dispatch(bleUpdateAvailablePeripherals(peripherals));
       })
       .catch((err) => {
         console.log('error getting peripherals', err);
@@ -72,33 +130,38 @@ export function bleScanEnded() {
   }
 }
 
-// TODO CONNECT/DISCONNECT TO PERIPHERAL ACTIONS
-export function bleConnectResult(device, data, error) {
+export function bleUpdateAvailablePeripherals(peripherals){
   return {
-    type: BLE_CONNECT,
-    device,
-    data,
-    error,
-  }
+    type: BLE_UPDATE_AVAILABLE_PERIPHERALS,
+    peripherals
+  } 
 }
 
-export function bleConnect(device) {
+// REFRESH CONNECTED PERIPHERALS
+export function getConnectedPeripherals() {
   return (dispatch) => {
-    console.log('bleConnect', device.id)
-    BleManager.connect(device.id)
-      .then((data)=>{
-        data['connected'] = true;
-        dispatch(bleConnectResult(device, data, null));
+    BleManager.getConnectedPeripherals([])
+      .then((peripherals) => {
+        dispatch(bleUpdateConnectedPeripherals(peripherals));
       })
       .catch((err) => {
-        console.log ('error connecting to peripheral', err);
-        dispatch(bleConnectResult(device, null, err));
-      })
+        console.log('error getting peripherals', err);
+      });
   }
 }
 
-export function bleDisconnect() {
-  
+export function bleUpdateConnectedPeripherals(peripherals){
+  return {
+    type: BLE_UPDATE_CONNECTED_PERIPHERALS,
+    peripherals
+  } 
+}
+
+export function bleUpdatePeripheralsWithServices(device){
+  return {
+    type: BLE_UPDATE_PERIPHERALS_WITH_SERVICES,
+    device
+  } 
 }
 
 // TODO READ FROM / WRITE TO PERIPHERAL ACTIONS

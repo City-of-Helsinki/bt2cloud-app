@@ -1,0 +1,226 @@
+import React, { Component } from 'react';
+import {
+	View,
+	Text,
+	NativeAppEventEmitter,
+	StyleSheet,
+	TouchableHighlight,
+	ScrollView,
+	ActivityIndicator,
+} from 'react-native';
+
+import { connect } from 'react-redux';
+import { 
+	bleStart, 
+	bleScanStart, 
+	bleScanStop,
+	bleScanEnded, 
+	bleConnect, 
+	bleDisconnect,
+	getConnectedPeripherals,
+	getAvailablePeripherals 
+} from '../actions/actions';
+
+class ScanView extends Component {
+
+	constructor(props) {
+		super(props);
+	}
+
+	componentDidMount() {
+		this.props.bleStart();
+		this.handleDiscoverPeripheral = this.handleDiscoverPeripheral.bind(this);
+		this.handleScanEnded = this.handleScanEnded.bind(this);
+		this.handleConnectPeripheral = this.handleConnectPeripheral.bind(this);
+		this.handleDisconnectPeripheral = this.handleDisconnectPeripheral.bind(this);
+		NativeAppEventEmitter
+			.addListener('BleManagerStopScan', this.handleScanEnded);
+		NativeAppEventEmitter
+			.addListener('BleManagerDiscoverPeripheral', this.handleDiscoverPeripheral);
+		NativeAppEventEmitter
+			.addListener('BleManagerConnectPeripheral', this.handleConnectPeripheral);
+		NativeAppEventEmitter
+			.addListener('BleManagerDisconnectPeripheral', this.handleDisconnectPeripheral);
+	}
+
+	handleDiscoverPeripheral() {
+
+		this.props.getAvailablePeripherals();
+	}
+
+	handleConnectPeripheral() {
+		this.props.getConnectedPeripherals();
+	}
+
+	handleDisconnectPeripheral() {
+		this.props.getConnectedPeripherals();
+	}
+
+	handleScanEnded() {
+		this.props.bleScanEnded();
+	}
+
+	handleScanPress() {
+		let { scanning } = this.props.ble;
+		scanning ? this.props.bleScanStop() : this.props.bleScanStart();
+	}
+
+	handleConnectPress(device) {
+		let connected = this.props.ble.connectedPeripherals.map(p=>p.id).includes(device.id);
+		connected ? this.props.bleDisconnect(device) : this.props.bleConnect(device);
+	}
+
+	render() {
+		let that = this;
+		let { started, startError, scanning, scanError, peripherals, connectedPeripherals,
+			peripheralsWithServices, connectError } = this.props.ble;
+		console.log(this.props.ble);
+		console.log(peripheralsWithServices.length);
+
+		function scanText() {
+			if (scanning) return <Text style={buttonText}>Press to Stop</Text>
+			else return <Text style={buttonText}>Press to Scan</Text>
+		}
+
+		function renderFoundDevices() {
+			console.log(peripherals);
+			return peripherals.map((device)=> {
+				let connected = connectedPeripherals.map(p=>p.id).includes(device.id);
+				return (
+				<TouchableHighlight 
+					onPress={that.handleConnectPress.bind(that, device)} 
+					key={device.id} 
+					style={[
+						deviceBox, 
+						{
+							backgroundColor: connected ? 'navy' : 'white',
+						}]
+					}>
+					<View>
+						<Text style={[textSmall, {color: connected ? 'white' : 'navy'}]}>
+							Name: {device.name}
+						</Text>
+						<Text style={[textSmall, {color: connected ? 'white' : 'navy'}]}>
+							ID: {device.id}
+						</Text>
+					</View>
+				</TouchableHighlight>
+				);
+			});
+		}
+
+		return (
+			<View style={container}>
+				<ScrollView>
+					<View style={scrollView}>
+					{connectError && <Text>{connectError}</Text>}
+					{renderFoundDevices()}
+					</View>
+				</ScrollView>
+				<View style={deviceAmount}>
+					<Text style={text}>Found {peripherals.length} devices</Text>
+					{peripherals.length > 0 && <Text style={textSmall}>tap to connect/disconnect</Text>}
+				</View>
+				{started && 
+					<TouchableHighlight onPress={this.handleScanPress.bind(this)} style={button}>
+						<View style={{flexDirection: 'row'}}>
+							<View>
+								{scanText()}					
+							</View>
+							{scanning && <ActivityIndicator style={spinner} color='white' />}		
+						</View>
+					</TouchableHighlight>
+				}
+				{!started && startError &&
+					<View style={button}>
+						<Text style={buttonText}>Error starting BLE: {startError}</Text>
+					</View>
+				}
+			</View>
+		);
+	}
+}
+
+styles = StyleSheet.create({
+	container: {
+		flex: 1,
+		alignItems: 'center',
+		justifyContent: 'flex-end',
+		paddingBottom: 20,
+	},
+	button: {
+		width: 200,
+		height: 60,
+		borderRadius: 5,
+		justifyContent: 'center',
+		alignItems: 'center',
+		backgroundColor: 'navy',
+	},
+	buttonText: {
+		color: 'white',
+		fontSize: 20,
+	},
+	deviceBox: {
+		width: 300,
+		height: 60,
+		borderWidth: 1,
+		justifyContent: 'center',
+		alignItems: 'center',
+		marginTop: 15,
+		borderColor: 'navy',
+	},
+	text: {
+		fontSize: 24,
+		color: 'black',
+	},
+	textSmall: {
+		fontSize: 16,
+		color: 'black',
+	},
+	scrollView: {
+		flex: 1,
+		justifyContent: 'flex-end',
+		alignItems: 'center',
+	},
+	deviceAmount: {
+		width: 200, 
+		alignItems: 'center', 
+		marginTop: 15,
+		marginBottom: 25,
+	},
+	spinner: {
+		marginLeft: 10,
+	}
+});
+const { 
+	container, 
+	button,
+	buttonText, 
+	text, 
+	textSmall, 
+	deviceBox,
+	scrollView,
+	deviceAmount,
+	spinner,
+} = styles;
+
+function mapStateToProps(state) {
+  return {
+    ble: state.ble
+  };
+}
+
+function mapDispatchToProps(dispatch) {
+  return {
+    bleStart: () => dispatch(bleStart()),
+    bleScanStart: () => dispatch(bleScanStart()),
+		bleScanStop: () => dispatch(bleScanStop()),    
+    bleScanEnded: () => dispatch(bleScanEnded()),
+    bleConnect: (device) => dispatch(bleConnect(device)),
+    bleDisconnect: (device) => dispatch(bleDisconnect(device)),
+    getAvailablePeripherals: () => dispatch(getAvailablePeripherals()),
+    getConnectedPeripherals: () => dispatch(getConnectedPeripherals()),
+  };
+}
+
+export default connect(mapStateToProps, mapDispatchToProps)(ScanView);

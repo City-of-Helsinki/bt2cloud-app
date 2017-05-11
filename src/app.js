@@ -10,13 +10,14 @@ import { fetchData } from './actions/actions';
 import ScrollableTabView from 'react-native-scrollable-tab-view';
 import TabBar from './components/TabBar';
 
-import ScanView from './views/ScanView'
+import ScanView from './views/ScanView';
+import MyDevicesView from './views/MyDevicesView';
 
 const App = (props) => {
   return (
     <ScrollableTabView renderTabBar={() => <TabBar someProp={'here'} />}>
       <ScanView tabLabel="Scan&Connect" />
-      <ScanView tabLabel="Page 2" />
+      <MyDevicesView tabLabel="My Devices" />
       <ScanView tabLabel="Page 3" />
     </ScrollableTabView>
   );

@@ -21,6 +21,8 @@ import {
 	getAvailablePeripherals 
 } from '../actions/actions';
 
+import DeviceBox from '../components/DeviceBox';
+
 class ScanView extends Component {
 
 	constructor(props) {
@@ -88,24 +90,18 @@ class ScanView extends Component {
 			return peripherals.map((device)=> {
 				let connected = connectedPeripherals.map(p=>p.id).includes(device.id);
 				return (
-				<TouchableHighlight 
+				<DeviceBox
 					onPress={that.handleConnectPress.bind(that, device)} 
 					key={device.id} 
+					device={device}
+					connected={connected}
 					style={[
 						deviceBox, 
 						{
 							backgroundColor: connected ? 'navy' : 'white',
 						}]
 					}>
-					<View>
-						<Text style={[textSmall, {color: connected ? 'white' : 'navy'}]}>
-							Name: {device.name}
-						</Text>
-						<Text style={[textSmall, {color: connected ? 'white' : 'navy'}]}>
-							ID: {device.id}
-						</Text>
-					</View>
-				</TouchableHighlight>
+				</DeviceBox>
 				);
 			});
 		}

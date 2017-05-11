@@ -17,3 +17,7 @@ Done? in the directory of your choice, run:
 > react-native run-android
 
 The app should launch on your device.
+
+To run tests:
+
+> npm test

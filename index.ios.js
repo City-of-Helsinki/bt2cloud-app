@@ -16,3 +16,5 @@ const BLE_sovellus = () => (
 )
 
 AppRegistry.registerComponent('BLE_sovellus', () => BLE_sovellus);
+
+export default BLE_sovellus;

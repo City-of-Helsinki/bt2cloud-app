@@ -16,7 +16,7 @@ import { PermissionsAndroid } from 'react-native';
 export function bleStartResult(error) {
   return {
     type: BLE_START,
-    started: !error,
+    started: typeof error === "undefined" ? true : false,
     error: error
   }
 }
@@ -29,7 +29,7 @@ export function bleStart() {
       })
       .catch((err) => {
         console.log('failure starting ble');
-        dispatch(bleStartResult(err));
+        dispatch(bleStartResult(err.message));
       });
   }
 
@@ -39,7 +39,7 @@ export function bleStart() {
 export function bleScanStartResult(error) {
   return {
     type: BLE_SCAN_START,
-    scanning: !error,
+    scanning: typeof error === "undefined" ? true : false,
     error: error
   }
 }
@@ -52,7 +52,7 @@ export function bleScanStart() {
       })
       .catch((err) => {
         console.log('scan error');
-        dispatch(bleScanStartResult(err));
+        dispatch(bleScanStartResult(err.message));
       });
   }
 }
@@ -74,7 +74,6 @@ export function bleScanStop() {
 export function bleScanEnded() {
   return {
     type: BLE_SCAN_ENDED,
-    scanning: false,
   }
 }
 

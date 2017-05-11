@@ -75,6 +75,7 @@ class ScanView extends Component {
 		let { started, startError, scanning, scanError, peripherals, connectedPeripherals,
 			peripheralsWithServices, connectError } = this.props.ble;
 		console.log(this.props.ble);
+		console.log(typeof startError);
 		console.log(peripheralsWithServices.length);
 
 		function scanText() {

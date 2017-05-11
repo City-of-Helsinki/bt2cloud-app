@@ -25,7 +25,7 @@ export default function bleReducer (state = initialState, action) {
     case BLE_START: 
       return {
         ...state,
-        started: true,
+        started: action.started,
         startError: action.error ? action.error : null
       };
 

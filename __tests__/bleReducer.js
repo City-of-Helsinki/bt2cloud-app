@@ -91,11 +91,14 @@ describe('BLE_UPDATE_PERIPHERALS_WITH_SERVICES', () => {
 		const initialState = {
 			peripheralsWithServices: [
 				{name: 'foo', id: 'a1'}
-			]
+			],
+			connectError: 'whatever'
 		};
 
 		const newDevice = {name: 'bar', id: 'a2'}; 
 		const oldDevice = {name: 'baz', id: 'a1'}; // id matches existing item in array
+
+		// Connect Error should also always be set to null when successfully updated
 
 		expect(
 			bleReducer(initialState, {
@@ -106,7 +109,8 @@ describe('BLE_UPDATE_PERIPHERALS_WITH_SERVICES', () => {
 					peripheralsWithServices: [
 						{name: 'foo', id: 'a1'},
 						{name: 'bar', id: 'a2'},
-					]
+					],
+					connectError: null
 				});	
 
 		expect(
@@ -114,7 +118,7 @@ describe('BLE_UPDATE_PERIPHERALS_WITH_SERVICES', () => {
 				type: types.BLE_UPDATE_PERIPHERALS_WITH_SERVICES, 
 				device: oldDevice
 			}))
-				.toEqual(initialState);	
+				.toEqual({...initialState, connectError: null});
 	});	
 
 });

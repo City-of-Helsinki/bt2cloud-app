@@ -69,6 +69,7 @@ export default function bleReducer (state = initialState, action) {
       if (!peripheralIDs.includes(action.device.id)) peripheralsWithServices.push(action.device);
       return {
         ...state,
+        connectError: null,
         peripheralsWithServices
       };  
 

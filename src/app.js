@@ -1,32 +1,37 @@
-import React from 'react';
-import {
-  AppRegistry,
-  View,
-} from 'react-native';
+import React, { Component } from 'react';
+import { StyleSheet } from 'react-native';
+import { Scene, Router } from 'react-native-router-flux';
 
-import { connect } from 'react-redux';
-import { fetchData } from './actions/actions';
+import MainView from './views/MainView';
+import DeviceDetailView from './views/DeviceDetailView';
 
-import ScrollableTabView from 'react-native-scrollable-tab-view';
-import TabBar from './components/TabBar';
-
-import ScanView from './views/ScanView';
-import MyDevicesView from './views/MyDevicesView';
-
-const App = (props) => {
-  return (
-    <ScrollableTabView renderTabBar={() => <TabBar someProp={'here'} />}>
-      <ScanView tabLabel="Scan&Connect" />
-      <MyDevicesView tabLabel="My Devices" />
-      <ScanView tabLabel="Page 3" />
-    </ScrollableTabView>
-  );
+class App extends Component {
+	render() {
+		return (
+			<Router>
+				<Scene key="root" titleStyle={navBarTitle} navigationBarStyle={navBar}>
+					<Scene key="MainView" component={MainView} title="BT2CLOUD" />
+					<Scene key="DeviceDetailView" component={DeviceDetailView} title="BT2CLOUD" />
+				</Scene>
+			</Router>
+		);
+	}
 }
 
-function mapStateToProps(state) {
-  return {
-    appData: state.appData
-  };
-}
+export default App;
 
-export default connect(mapStateToProps, null)(App);
+const styles = StyleSheet.create({
+	navBar: {
+		backgroundColor: 'navy',
+		height: 60,
+	},
+	navBarTitle: {
+		color: 'white',
+		fontSize: 20,
+	}
+});
+
+const {
+	navBar,
+	navBarTitle,
+} = styles;

@@ -8,51 +8,44 @@ import {
 
 import Icon from 'react-native-vector-icons/FontAwesome';
 
-class DeviceBox extends Component {
+class ServiceBox extends Component {
 	constructor(props){
 		super(props);
 
+		this.state = {
+			collapsed: false,
+		}
+		this.infoPress = this.infoPress.bind(this);
 	}
 
 	infoPress(){
-		this.setState({ collapsed: !this.state.collapsed });
+		this.setState({collapsed: !this.state.collapsed})
 	}
 
 	render() {
-		let infoIcon = 'info';
+		let arrowIcon = this.state.collapsed ? 'angle-up' : 'angle-down';
 		return (
 			<View>
-			<TouchableHighlight 
-				onPress={this.props.onPress} 
-				style={this.props.style}>
+			<View style={this.props.style}>
 				<View style={innerContainer}>
 					<View style={iconContainer}>
-					{this.props.connected && 
-						<Icon name="check-circle" size={30} color="#FFF" />
-					}
+						<Icon name="usd" size={30} color="#FFF" />
 					</View>
 					<View style={contentContainer}>
-					<Text style={[text, {color: this.props.connected ? 'white' : 'navy'}]}>
-						Name: {this.props.device.name}
-					</Text>
-					<Text style={[text, {color: this.props.connected ? 'white' : 'navy'}]}>
-						ID: {this.props.device.id}
+					<Text style={text}>
+						ID: {this.props.uuid}
 					</Text>
 					</View>
-					{this.props.connected && 
-						<TouchableHighlight onPress={this.props.infoPress} style={iconContainer}>
-						<Icon name={infoIcon} size={30} color="#FFF" />
+						<TouchableHighlight onPress={this.infoPress} style={iconContainer}>
+						<Icon name={arrowIcon} size={30} color="#FFF" />
 						</TouchableHighlight>
-					}
 				</View>
-			</TouchableHighlight>	
-
 			</View>
+			{this.state.collapsed && this.props.children}
+			</View>	
 		);
 	}
 } 
-	
-export default DeviceBox;
 
 const styles = StyleSheet.create({
 	innerContainer: {
@@ -64,8 +57,8 @@ const styles = StyleSheet.create({
 		flex: 1,
 	},
 	iconContainer: {
-		width: 50,
-		height: 50,
+		width: 60,
+		height: 60,
 		alignItems: 'center',
 		justifyContent: 'center',
 		marginHorizontal: 10,
@@ -77,8 +70,10 @@ const styles = StyleSheet.create({
 	},
 	text:{
 		fontSize: 14,	
+		color: 'white',
 	}
 });
 const { text, innerContainer, contentContainer, iconContainer, deviceDetailsContainer } = styles;
 
+export default ServiceBox;
 

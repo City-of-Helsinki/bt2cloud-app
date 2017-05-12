@@ -7,7 +7,10 @@ import {
 	TouchableHighlight,
 	ScrollView,
 	ActivityIndicator,
+	Dimensions,
 } from 'react-native';
+
+import { Actions } from 'react-native-router-flux';
 
 import { connect } from 'react-redux';
 import { 
@@ -44,6 +47,11 @@ class ScanView extends Component {
 	componentDidMount() {
 		this.props.bleStart();
 		
+		setTimeout(() => {
+			if (this.props.ble.scanning) {
+				this.props.getAvailablePeripherals();
+			}
+		}, 1000);
 	}
 
 	// this gets called multiple times per device upon discovery
@@ -77,6 +85,12 @@ class ScanView extends Component {
 		connected ? this.props.bleDisconnect(device) : this.props.bleConnect(device);
 	}
 
+	handleInfoPress(device) {
+
+		detailedDevice = this.props.ble.peripheralsWithServices.filter(p=>p.id === device.id)[0];
+		Actions.DeviceDetailView({title: device.name, device: detailedDevice});
+	}
+
 	render() {
 		let that = this;
 		let { started, startError, scanning, scanError, peripherals, connectedPeripherals,
@@ -97,6 +111,7 @@ class ScanView extends Component {
 				return (
 				<DeviceBox
 					onPress={that.handleConnectPress.bind(that, device)} 
+					infoPress={that.handleInfoPress.bind(that, device)}
 					key={device.id} 
 					device={device}
 					connected={connected}
@@ -163,7 +178,7 @@ styles = StyleSheet.create({
 		fontSize: 20,
 	},
 	deviceBox: {
-		width: 300,
+		width: Dimensions.get('window').width - 20,
 		height: 60,
 		borderWidth: 1,
 		justifyContent: 'center',

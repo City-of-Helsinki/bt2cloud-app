@@ -42,17 +42,12 @@ class MyDevicesView extends Component {
 		function renderKnownDevices() {
 			peripheralList = peripheralsWithServices.map((device) => {
 				let connected = connectedPeripherals.map(p=>p.id).includes(device.id);
-				if (connected) {
-					device['connected']=true;
-				}
-				else {
-					device['connected']=false;
-				}
-
+				if (connected) device['connected']=true;
+				else device['connected']=false;
 				return device;
 			});
-			peripheralList.sort((p1, p2) => {
 
+			peripheralList.sort((p1, p2) => {
 				return (p1.connected === p2.connected) ? 0 : p1.connected ? -1 : 1;
 			});
 
@@ -64,6 +59,7 @@ class MyDevicesView extends Component {
 						key={device.id} 
 						device={device}
 						connected={device.connected}
+						collapsable={true}
 						style={[
 						deviceBox, 
 						{

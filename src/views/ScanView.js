@@ -27,10 +27,6 @@ class ScanView extends Component {
 
 	constructor(props) {
 		super(props);
-	}
-
-	componentDidMount() {
-		this.props.bleStart();
 		this.handleDiscoverPeripheral = this.handleDiscoverPeripheral.bind(this);
 		this.handleScanEnded = this.handleScanEnded.bind(this);
 		this.handleConnectPeripheral = this.handleConnectPeripheral.bind(this);
@@ -42,19 +38,28 @@ class ScanView extends Component {
 		NativeAppEventEmitter
 			.addListener('BleManagerConnectPeripheral', this.handleConnectPeripheral);
 		NativeAppEventEmitter
-			.addListener('BleManagerDisconnectPeripheral', this.handleDisconnectPeripheral);
+			.addListener('BleManagerDisconnectPeripheral', this.handleDisconnectPeripheral);		
 	}
 
-	handleDiscoverPeripheral() {
+	componentDidMount() {
+		this.props.bleStart();
+		
+	}
 
+	// this gets called multiple times per device upon discovery
+	// cannot be prevented on android
+	handleDiscoverPeripheral(data) {
+		console.log(data);
 		this.props.getAvailablePeripherals();
 	}
 
 	handleConnectPeripheral() {
+		console.log('handleConnectPeripheral');
 		this.props.getConnectedPeripherals();
 	}
 
 	handleDisconnectPeripheral() {
+		console.log('handleDisconnectPeripheral');
 		this.props.getConnectedPeripherals();
 	}
 

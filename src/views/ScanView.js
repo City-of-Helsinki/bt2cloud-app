@@ -34,6 +34,7 @@ class ScanView extends Component {
 		this.handleScanEnded = this.handleScanEnded.bind(this);
 		this.handleConnectPeripheral = this.handleConnectPeripheral.bind(this);
 		this.handleDisconnectPeripheral = this.handleDisconnectPeripheral.bind(this);
+		this.handleNotification = this.handleNotification.bind(this);
 		NativeAppEventEmitter
 			.addListener('BleManagerStopScan', this.handleScanEnded);
 		NativeAppEventEmitter
@@ -42,6 +43,8 @@ class ScanView extends Component {
 			.addListener('BleManagerConnectPeripheral', this.handleConnectPeripheral);
 		NativeAppEventEmitter
 			.addListener('BleManagerDisconnectPeripheral', this.handleDisconnectPeripheral);		
+		NativeAppEventEmitter
+			.addListener('BleManagerDidUpdateValueForCharacteristic', this.handleDisconnectPeripheral);		
 	}
 
 	componentDidMount() {
@@ -69,6 +72,10 @@ class ScanView extends Component {
 	handleDisconnectPeripheral() {
 		console.log('handleDisconnectPeripheral');
 		this.props.getConnectedPeripherals();
+	}
+
+	handleNotification(deviceID, characteristic, hex) {
+		
 	}
 
 	handleScanEnded() {

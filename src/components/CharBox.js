@@ -35,7 +35,10 @@ const CharBox = (props) => {
 					<View style={innerContainer}>
 						<View style={contentContainer}>
 							<Text style={text}>
-								Value: {props.newestValue.data}
+								Value: {props.newestValue.value}
+							</Text>
+							<Text style={text}>
+								Hex: {props.newestValue.hex}
 							</Text>
 						</View>				
 					</View>

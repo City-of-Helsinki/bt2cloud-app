@@ -1,4 +1,4 @@
-// Template for redux data fetching reducer
+import Utils from '../utils/utils';
 
 import { 
   BLE_START, 
@@ -86,14 +86,17 @@ export default function bleReducer (state = initialState, action) {
 
     case BLE_APPEND_READ_HISTORY:  
       let { deviceID, service, characteristic, data } = action;
+      let hex = data;
+      let value = Utils.hexDecode(hex);
       let date = new Date();
       let readHistory = state.readHistory;
       readHistory.push({
         deviceID,
         service,
         characteristic,
-        data,
-        date
+        hex,
+        value,
+        date,
       });
 
     return {

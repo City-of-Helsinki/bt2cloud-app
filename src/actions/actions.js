@@ -9,6 +9,11 @@ import {
   BLE_READ,
   BLE_READ_ERROR,
   BLE_APPEND_READ_HISTORY,
+  BLE_NOTIFY,
+  BLE_NOTIFY_STOP,
+  BLE_NOTIFY_ERROR,
+  BLE_NOTIFY_STARTED,
+  BLE_NOTIFY_STOPPED,
 } from '../constants';
 import BleManager from 'react-native-ble-manager';
 import { PermissionsAndroid } from 'react-native';
@@ -166,8 +171,6 @@ export function bleUpdatePeripheralsWithServices(device){
   } 
 }
 
-// TODO READ FROM / WRITE TO PERIPHERAL ACTIONS
-
 export function bleReadError(deviceID, service, characteristic, error) {
   return {
     type: BLE_READ_ERROR,
@@ -205,6 +208,57 @@ export function bleRead(deviceID, service, characteristic) {
   }
 }
 
-export function bleWrite() {
-  
+export function bleNotifyError(deviceID, service, characteristic, error) {
+  return {
+    type: BLE_NOTIFY_ERROR,
+    error: {
+      deviceID,
+      service,
+      characteristic,    
+      message: error,
+    }
+  }
+}
+
+export function bleNotifyStarted(characteristic) {
+  return {
+    type: BLE_NOTIFY_STARTED,
+    characteristic,
+  }
+}
+
+export function bleNotifyStopped(characteristic) {
+  return {
+    type: BLE_NOTIFY_STOPPED,
+    characteristic,
+  }
+}
+
+export function bleNotify(deviceID, service, characteristic) {
+  return (dispatch) => {
+    console.log('bleNotify');
+    if (!deviceID || !service || !characteristic) return;
+    BleManager.startNotification(deviceID, service, characteristic)
+      .then(()=> {
+        dispatch(bleNotifyStarted(characteristic))
+      })
+      .catch((error)=>{
+        console.log(error);
+        dispatch(bleNotifyError(deviceID, service, characteristic, error.message));
+      });
+  }
+}
+
+export function bleNotifyStop(deviceID, service, characteristic) {
+  return (dispatch) => {
+    console.log('bleNotifyStop');
+    if (!deviceID || !service || !characteristic) return;
+    BleManager.stopNotification(deviceID, service, characteristic)
+      .then(()=> {
+        dispatch(bleNotifyStopped(characteristic))
+      })
+      .catch((error)=>{
+        console.log(error);
+      });
+  }
 }

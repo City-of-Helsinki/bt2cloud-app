@@ -18,9 +18,9 @@ const CharBox = (props) => {
 					</Text>
 					</View>
 					{props.notify && 
-						<TouchableHighlight onPress={props.notifyPress} 
+						<TouchableHighlight onPress={() => props.notifyPress(props.service, props.characteristic)} 
 							style={[iconContainer, {backgroundColor: props.connected ? 'navy' : '#444' }]}>
-						<Text style={buttonText}>Notify</Text>
+						<Text style={buttonText}>{props.notifying ? 'Stop' : 'Notify'}</Text>
 						</TouchableHighlight>
 					}
 					{props.read && 

@@ -21,7 +21,9 @@ import {
 	bleConnect, 
 	bleDisconnect,
 	getConnectedPeripherals,
-	getAvailablePeripherals 
+	getAvailablePeripherals,
+	bleAppendReadHistory, 
+	bleNotifyStopped,
 } from '../actions/actions';
 
 import DeviceBox from '../components/DeviceBox';
@@ -44,7 +46,7 @@ class ScanView extends Component {
 		NativeAppEventEmitter
 			.addListener('BleManagerDisconnectPeripheral', this.handleDisconnectPeripheral);		
 		NativeAppEventEmitter
-			.addListener('BleManagerDidUpdateValueForCharacteristic', this.handleDisconnectPeripheral);		
+			.addListener('BleManagerDidUpdateValueForCharacteristic', this.handleNotification);		
 	}
 
 	componentDidMount() {
@@ -69,13 +71,31 @@ class ScanView extends Component {
 		this.props.getConnectedPeripherals();
 	}
 
-	handleDisconnectPeripheral() {
-		console.log('handleDisconnectPeripheral');
+	handleDisconnectPeripheral(data) {
+		console.log('handleDisconnectPeripheral', data);
+		if (!data.hasOwnProperty('peripheral')) return;
+		let deviceID = data.peripheral;
+
+		let { notifyingChars, peripheralsWithServices } = this.props.ble;
+		console.log(peripheralsWithServices.filter(p=>p.id === deviceID)[0]);
+		deviceChars = peripheralsWithServices.filter(p=>p.id === deviceID)[0].characteristics.map(c=>c.characteristic);
+		console.log('deviceChars:', deviceChars);
+		for (char in deviceChars) {
+			console.log(deviceChars[char]);
+			console.log(notifyingChars);
+			if (notifyingChars.includes(deviceChars[char])) {
+				console.log('found notifying char, stopping...');
+				this.props.bleNotifyStopped(deviceChars[char]);
+			}
+		}
+
 		this.props.getConnectedPeripherals();
 	}
 
-	handleNotification(deviceID, characteristic, hex) {
-		
+	handleNotification(data) {
+
+		let deviceID = data.peripheral, characteristic = data.characteristic, service = data.service, hex = data.value;
+		this.props.bleAppendReadHistory(deviceID, service, characteristic, hex);
 	}
 
 	handleScanEnded() {
@@ -244,6 +264,9 @@ function mapDispatchToProps(dispatch) {
     bleDisconnect: (device) => dispatch(bleDisconnect(device)),
     getAvailablePeripherals: () => dispatch(getAvailablePeripherals()),
     getConnectedPeripherals: () => dispatch(getConnectedPeripherals()),
+    bleAppendReadHistory: (deviceID, service, characteristic, hex) => dispatch(
+    	bleAppendReadHistory(deviceID, service, characteristic, hex)),
+    bleNotifyStopped: (characteristic) => dispatch(bleNotifyStopped(characteristic)),
   };
 }
 

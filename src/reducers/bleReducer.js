@@ -11,6 +11,10 @@ import {
   BLE_READ,
   BLE_READ_ERROR,
   BLE_APPEND_READ_HISTORY,
+  BLE_NOTIFY,
+  BLE_NOTIFY_ERROR,  
+  BLE_NOTIFY_STARTED,
+  BLE_NOTIFY_STOPPED,
 } from '../constants';
 const initialState = {
   started: false,
@@ -23,6 +27,8 @@ const initialState = {
   connectError: null,
   readError: null,
   readHistory: [],
+  notifyError: null,
+  notifyingChars: [],
 };
 
 export default function bleReducer (state = initialState, action) {
@@ -103,6 +109,30 @@ export default function bleReducer (state = initialState, action) {
       ...state,
       readHistory,
     }
+
+    case BLE_NOTIFY_ERROR:
+      return {
+        ...state,
+        notifyError: action.error,
+      }
+
+    case BLE_NOTIFY_STARTED:
+      notifyingChars = state.notifyingChars;
+      if (!notifyingChars.includes(action.characteristic)) notifyingChars.push(action.characteristic);
+
+      return {
+        ...state,
+        notifyingChars,
+      }
+
+    case BLE_NOTIFY_STOPPED:
+      console.log('BLE_NOTIFY_STOPPED', action.characteristic);
+      notifyingChars = state.notifyingChars.filter(c=> c !== action.characteristic);
+
+      return {
+        ...state,
+        notifyingChars,
+      }
 
     default:
       return state;

@@ -17,6 +17,8 @@ import {
 	bleConnect, 
 	bleDisconnect,
 	bleRead,
+	bleNotify,
+	bleNotifyStop,
 } from '../actions/actions';
 
 import ServiceBox from '../components/ServiceBox';
@@ -31,7 +33,7 @@ class DeviceDetailView extends Component {
 		this.handleConnectPress = this.handleConnectPress.bind(this);
 	}
 
-	componentDidMount() {
+	componentDidUpdate() {
 	}
 
 	handleReadPress(service, characteristic) {
@@ -42,7 +44,13 @@ class DeviceDetailView extends Component {
 		this.props.bleRead(device.id, service, characteristic);
 	}
 
-	handleNotifyPress() {
+	handleNotifyPress(service, characteristic) {
+		let { device } = this.props;
+		let connected = this.props.ble.connectedPeripherals.map(p=>p.id).includes(device.id);
+		if (!connected) return;
+
+		let notifying = this.props.ble.notifyingChars.includes(characteristic);
+		notifying ? this.props.bleNotifyStop(device.id, service, characteristic) : this.props.bleNotify(device.id, service, characteristic)
 	}
 
 	handleConnectPress() {
@@ -53,7 +61,7 @@ class DeviceDetailView extends Component {
 
 	render() {
 		let { started, startError, scanning, scanError, peripherals, connectedPeripherals,
-			peripheralsWithServices, connectError, readHistory } = this.props.ble;
+			peripheralsWithServices, connectError, readHistory, notifyingChars } = this.props.ble;
 		let { device } = this.props;
 		console.log(device.services);
 		let connected = connectedPeripherals.map(p=>p.id).includes(device.id);
@@ -82,7 +90,7 @@ class DeviceDetailView extends Component {
 									let newestValue = readHistory.filter
 										(v=>v.characteristic === c.characteristic && v.deviceID === device.id)
 										.slice(-1)[0];
-
+									let notifying = notifyingChars.includes(c.characteristic);
 									return (
 										<CharBox
 											key={c.characteristic}
@@ -90,6 +98,7 @@ class DeviceDetailView extends Component {
 											characteristic={c.characteristic}
 											read={read}
 											notify={notify}
+											notifying={notifying}
 											newestValue={newestValue}
 											connected={connected}
 											readPress={this.handleReadPress}
@@ -188,6 +197,10 @@ function mapDispatchToProps(dispatch) {
     bleDisconnect: (device) => dispatch(bleDisconnect(device)),
     bleRead: (deviceID, service, characteristic) => 
     	dispatch(bleRead(deviceID, service, characteristic)),
+    bleNotify: (deviceID, service, characteristic) => 
+    	dispatch(bleNotify(deviceID, service, characteristic)),
+    bleNotifyStop: (deviceID, service, characteristic) => 
+    	dispatch(bleNotifyStop(deviceID, service, characteristic)),
   };
 }
 

@@ -13,6 +13,11 @@ import {
 
 import { connect } from 'react-redux';
 
+import { 
+	bleConnect, 
+	bleDisconnect,
+} from '../actions/actions';
+
 import ServiceBox from '../components/ServiceBox';
 import CharBox from '../components/CharBox';
 
@@ -20,36 +25,55 @@ class DeviceDetailView extends Component {
 
 	constructor(props) {
 		super(props);
-		this.readPress = this.readPress.bind(this);
-		this.notifyPress = this.notifyPress.bind(this);
+		this.handleReadPress = this.handleReadPress.bind(this);
+		this.handleNotifyPress = this.handleNotifyPress.bind(this);
+		this.handleConnectPress = this.handleConnectPress.bind(this);
 	}
 
 	componentDidMount() {
 	}
 
-	readPress() {
+	handleReadPress() {
+		let { device } = this.props;
+		let connected = connectedPeripherals.map(p=>p.id).includes(device.id);
+		if (!connected) return;
+
+		
 	}
 
-	notifyPress() {
+	handleNotifyPress() {
+	}
+
+	handleConnectPress() {
+		let { device } = this.props;
+		let connected = this.props.ble.connectedPeripherals.map(p=>p.id).includes(device.id);
+		connected ? this.props.bleDisconnect(device) : this.props.bleConnect(device);
 	}
 
 	render() {
-		let that = this;
 		let { started, startError, scanning, scanError, peripherals, connectedPeripherals,
 			peripheralsWithServices, connectError } = this.props.ble;
 		let { device } = this.props;
 		console.log(device.services);
+		let connected = connectedPeripherals.map(p=>p.id).includes(device.id);
 
 
 		return (
 			<View style={container}>
 				<ScrollView>
 					<View style={scrollView}>
+						<TouchableHighlight onPress={this.handleConnectPress} style={button}>
+							<Text style={buttonText}>{connected ? 'Disconnect' : 'Connect'}</Text>
+						</TouchableHighlight>					
 						{device.services.map(s => {
 							let chars = device.characteristics.filter(c => c.service === s.uuid);
 							console.log('chars: ', chars);
 							return(
-							<ServiceBox key={s.uuid} uuid={s.uuid} style={serviceBox}>
+							<ServiceBox 
+								key={s.uuid} 
+								uuid={s.uuid} 
+								connected={connected}
+								style={[serviceBox, {backgroundColor: connected ? 'navy' : '#444' }]}>
 								{chars.map(c=>{
 									console.log('c: ', c);
 									let read = c.properties.hasOwnProperty('Read') && c.properties.Read === 'Read';
@@ -60,8 +84,9 @@ class DeviceDetailView extends Component {
 											characteristic={c.characteristic}
 											read={read}
 											notify={notify}
-											readPress={this.readPress}
-											notifyPress={this.notifyPress}
+											connected={connected}
+											readPress={this.handleReadPress}
+											notifyPress={this.handleNotifyPress}
 											style={charBox}
 										/>
 									);
@@ -86,8 +111,9 @@ styles = StyleSheet.create({
 		marginTop: 60,
 	},
 	button: {
-		width: 200,
-		height: 60,
+		marginTop: 20,
+		width: 150,
+		height: 40,
 		borderRadius: 5,
 		justifyContent: 'center',
 		alignItems: 'center',
@@ -151,6 +177,8 @@ function mapStateToProps(state) {
 
 function mapDispatchToProps(dispatch) {
   return {
+    bleConnect: (device) => dispatch(bleConnect(device)),
+    bleDisconnect: (device) => dispatch(bleDisconnect(device)),
   };
 }
 

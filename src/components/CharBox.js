@@ -18,12 +18,14 @@ const CharBox = (props) => {
 					</Text>
 					</View>
 					{props.notify && 
-						<TouchableHighlight onPress={props.notifyPress} style={iconContainer}>
+						<TouchableHighlight onPress={props.notifyPress} 
+							style={[iconContainer, {backgroundColor: connected ? 'navy' : '#444' }]}>
 						<Text style={buttonText}>Notify</Text>
 						</TouchableHighlight>
 					}
 					{props.read && 
-					<TouchableHighlight onPress={props.readPress} style={iconContainer}>
+					<TouchableHighlight onPress={props.readPress} 
+						style={[iconContainer, {backgroundColor: connected ? 'navy' : '#444' }]}>
 						<Text style={buttonText}>Read</Text>
 					</TouchableHighlight>
 					}

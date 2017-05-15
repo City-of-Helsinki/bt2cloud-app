@@ -7,7 +7,10 @@ import {
   BLE_CONNECT_ERROR,
   BLE_UPDATE_CONNECTED_PERIPHERALS,
   BLE_UPDATE_AVAILABLE_PERIPHERALS,
-  BLE_UPDATE_PERIPHERALS_WITH_SERVICES
+  BLE_UPDATE_PERIPHERALS_WITH_SERVICES,
+  BLE_READ,
+  BLE_READ_ERROR,
+  BLE_APPEND_READ_HISTORY,
 } from '../constants';
 const initialState = {
   started: false,
@@ -18,6 +21,8 @@ const initialState = {
   connectedPeripherals: [], // currently connected peripherals
   peripheralsWithServices: [], // peripherals with known services (not necessarily connected)
   connectError: null,
+  readError: null,
+  readHistory: [],
 };
 
 export default function bleReducer (state = initialState, action) {
@@ -71,7 +76,30 @@ export default function bleReducer (state = initialState, action) {
         ...state,
         connectError: null,
         peripheralsWithServices
-      };  
+      };
+
+    case BLE_READ_ERROR:
+      return {
+        ...state,
+        readError: action.error,
+      }
+
+    case BLE_APPEND_READ_HISTORY:  
+      let { deviceID, service, characteristic, data } = action;
+      let date = new Date();
+      let readHistory = state.readHistory;
+      readHistory.push({
+        deviceID,
+        service,
+        characteristic,
+        data,
+        date
+      });
+
+    return {
+      ...state,
+      readHistory,
+    }
 
     default:
       return state;

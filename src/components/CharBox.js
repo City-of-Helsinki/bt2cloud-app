@@ -19,17 +19,28 @@ const CharBox = (props) => {
 					</View>
 					{props.notify && 
 						<TouchableHighlight onPress={props.notifyPress} 
-							style={[iconContainer, {backgroundColor: connected ? 'navy' : '#444' }]}>
+							style={[iconContainer, {backgroundColor: props.connected ? 'navy' : '#444' }]}>
 						<Text style={buttonText}>Notify</Text>
 						</TouchableHighlight>
 					}
 					{props.read && 
-					<TouchableHighlight onPress={props.readPress} 
-						style={[iconContainer, {backgroundColor: connected ? 'navy' : '#444' }]}>
+					<TouchableHighlight 
+						onPress={() => props.readPress(props.service, props.characteristic)} 
+						style={[iconContainer, {backgroundColor: props.connected ? 'navy' : '#444' }]}>
 						<Text style={buttonText}>Read</Text>
 					</TouchableHighlight>
 					}
 				</View>
+				{props.newestValue && 
+					<View style={innerContainer}>
+						<View style={contentContainer}>
+							<Text style={text}>
+								Value: {props.newestValue.data}
+							</Text>
+						</View>				
+					</View>
+				}
+
 			</View>	
 		);
 } 

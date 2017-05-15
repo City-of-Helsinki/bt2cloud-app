@@ -16,6 +16,7 @@ import { connect } from 'react-redux';
 import { 
 	bleConnect, 
 	bleDisconnect,
+	bleRead,
 } from '../actions/actions';
 
 import ServiceBox from '../components/ServiceBox';
@@ -33,12 +34,12 @@ class DeviceDetailView extends Component {
 	componentDidMount() {
 	}
 
-	handleReadPress() {
+	handleReadPress(service, characteristic) {
 		let { device } = this.props;
-		let connected = connectedPeripherals.map(p=>p.id).includes(device.id);
+		let connected = this.props.ble.connectedPeripherals.map(p=>p.id).includes(device.id);
+		console.log(connected);
 		if (!connected) return;
-
-		
+		this.props.bleRead(device.id, service, characteristic);
 	}
 
 	handleNotifyPress() {
@@ -52,7 +53,7 @@ class DeviceDetailView extends Component {
 
 	render() {
 		let { started, startError, scanning, scanError, peripherals, connectedPeripherals,
-			peripheralsWithServices, connectError } = this.props.ble;
+			peripheralsWithServices, connectError, readHistory } = this.props.ble;
 		let { device } = this.props;
 		console.log(device.services);
 		let connected = connectedPeripherals.map(p=>p.id).includes(device.id);
@@ -78,12 +79,18 @@ class DeviceDetailView extends Component {
 									console.log('c: ', c);
 									let read = c.properties.hasOwnProperty('Read') && c.properties.Read === 'Read';
 									let notify = c.properties.hasOwnProperty('Notify') && c.properties.Notify === 'Notify';
+									let newestValue = readHistory.filter
+										(v=>v.characteristic === c.characteristic && v.deviceID === device.id)
+										.slice(-1)[0];
+
 									return (
 										<CharBox
 											key={c.characteristic}
+											service={s.uuid}
 											characteristic={c.characteristic}
 											read={read}
 											notify={notify}
+											newestValue={newestValue}
 											connected={connected}
 											readPress={this.handleReadPress}
 											notifyPress={this.handleNotifyPress}
@@ -179,6 +186,8 @@ function mapDispatchToProps(dispatch) {
   return {
     bleConnect: (device) => dispatch(bleConnect(device)),
     bleDisconnect: (device) => dispatch(bleDisconnect(device)),
+    bleRead: (deviceID, service, characteristic) => 
+    	dispatch(bleRead(deviceID, service, characteristic)),
   };
 }
 

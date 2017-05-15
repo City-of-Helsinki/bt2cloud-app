@@ -24,3 +24,5 @@ To run tests:
 ```
 npm test
 ```
+
+Whenever you pull changes from this repo, check to see if `package.json` has changed, and if yes, run `npm install` again before attempting to execute the program.

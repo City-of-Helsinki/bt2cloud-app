@@ -5,7 +5,10 @@ import {
   BLE_CONNECT_ERROR,
   BLE_UPDATE_CONNECTED_PERIPHERALS,
   BLE_UPDATE_AVAILABLE_PERIPHERALS,
-  BLE_UPDATE_PERIPHERALS_WITH_SERVICES
+  BLE_UPDATE_PERIPHERALS_WITH_SERVICES,
+  BLE_READ,
+  BLE_READ_ERROR,
+  BLE_APPEND_READ_HISTORY,
 } from '../constants';
 import BleManager from 'react-native-ble-manager';
 import { PermissionsAndroid } from 'react-native';
@@ -165,8 +168,41 @@ export function bleUpdatePeripheralsWithServices(device){
 
 // TODO READ FROM / WRITE TO PERIPHERAL ACTIONS
 
-export function bleRead() {
-  
+export function bleReadError(deviceID, service, characteristic, error) {
+  return {
+    type: BLE_READ_ERROR,
+    error: {
+      deviceID,
+      service,
+      characteristic,    
+      message: error,
+    }
+  }
+}
+
+export function bleAppendReadHistory(deviceID, service, characteristic, data) {
+  return {
+    type: BLE_APPEND_READ_HISTORY,
+    deviceID,
+    service,
+    characteristic,
+    data,
+  }
+}
+
+export function bleRead(deviceID, service, characteristic) {
+  return (dispatch) => {
+    console.log('bleRead');
+    if (!deviceID || !service || !characteristic) return;
+    BleManager.read(deviceID, service, characteristic)
+      .then((data)=> {
+        dispatch(bleAppendReadHistory(deviceID, service, characteristic, data));
+      })
+      .catch((error)=>{
+        console.log(error);
+        dispatch(bleReadError(deviceID, service, characteristic, error.message));
+      });
+  }
 }
 
 export function bleWrite() {

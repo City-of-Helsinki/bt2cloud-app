@@ -24,6 +24,8 @@ import {
 	getAvailablePeripherals,
 	bleAppendReadHistory, 
 	bleNotifyStopped,
+	bleFavoriteAdd,
+	bleFavoriteRemove,
 } from '../actions/actions';
 
 import DeviceBox from '../components/DeviceBox';
@@ -37,7 +39,6 @@ class ScanView extends Component {
 		this.handleConnectPeripheral = this.handleConnectPeripheral.bind(this);
 		this.handleDisconnectPeripheral = this.handleDisconnectPeripheral.bind(this);
 		this.handleNotification = this.handleNotification.bind(this);
-		this.handleFavoritePress = this.handleFavoritePress.bind(this);
 		NativeAppEventEmitter
 			.addListener('BleManagerStopScan', this.handleScanEnded);
 		NativeAppEventEmitter
@@ -59,6 +60,7 @@ class ScanView extends Component {
 		if (this.props.ble.started && !this.props.ble.scanning
 			&& this.props.ble.startScanByDefault) {
 			this.props.bleScanStart();
+			this.props.getConnectedPeripherals();
 		}
 	}
 
@@ -107,6 +109,7 @@ class ScanView extends Component {
 	handleScanPress() {
 		let { scanning } = this.props.ble;
 		scanning ? this.props.bleScanStop() : this.props.bleScanStart();
+		this.props.getConnectedPeripherals();
 	}
 
 	handleConnectPress(device) {
@@ -120,14 +123,17 @@ class ScanView extends Component {
 		Actions.DeviceDetailView({title: device.name, device: detailedDevice});
 	}
 
-	handleFavoritePress(device) {
-
+	handleFavoritePress(deviceID, favorite) {
+		if (!deviceID) return;
+		console.log('favpress');
+		console.log(deviceID);
+		favorite ? this.props.bleFavoriteRemove(deviceID) : this.props.bleFavoriteAdd(deviceID);
 	}
 
 	render() {
 		let that = this;
 		let { started, startError, scanning, scanError, peripherals, connectedPeripherals,
-			peripheralsWithServices, connectError } = this.props.ble;
+			peripheralsWithServices, connectError, favoritePeripherals } = this.props.ble;
 		console.log(this.props.ble);
 		console.log(typeof startError);
 		console.log(peripheralsWithServices.length);
@@ -149,13 +155,16 @@ class ScanView extends Component {
 
 			return allDevices.map((device)=> {
 				let connected = connectedPeripherals.map(p=>p.id).includes(device.id);
+				let favorite = favoritePeripherals.includes(device.id);
 				let inRange = peripherals.map(p=>p.id).includes(device.id);
 				return (
 				<DeviceBox
-					onPress={that.handleConnectPress.bind(that, device)} 
+					connectPress={that.handleConnectPress.bind(that, device)} 
 					infoPress={that.handleInfoPress.bind(that, device)}
+					favPress={that.handleFavoritePress.bind(that, device.id, favorite)}
 					key={device.id} 
 					device={device}
+					favorite={favorite}
 					connected={connected}
 					inRange={inRange}
 					style={[
@@ -283,6 +292,8 @@ function mapDispatchToProps(dispatch) {
     bleAppendReadHistory: (deviceID, service, characteristic, hex) => dispatch(
     	bleAppendReadHistory(deviceID, service, characteristic, hex)),
     bleNotifyStopped: (characteristic) => dispatch(bleNotifyStopped(characteristic)),
+    bleFavoriteAdd: (deviceID, favorite) => dispatch(bleFavoriteAdd(deviceID, favorite)),
+    bleFavoriteRemove: (deviceID, favorite) => dispatch(bleFavoriteRemove(deviceID, favorite)),
   };
 }
 

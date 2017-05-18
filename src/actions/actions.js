@@ -14,6 +14,8 @@ import {
   BLE_NOTIFY_ERROR,
   BLE_NOTIFY_STARTED,
   BLE_NOTIFY_STOPPED,
+  BLE_FAVORITE_ADD,
+  BLE_FAVORITE_REMOVE,
 } from '../constants';
 import BleManager from 'react-native-ble-manager';
 import { PermissionsAndroid } from 'react-native';
@@ -262,5 +264,19 @@ export function bleNotifyStop(deviceID, service, characteristic) {
       .catch((error)=>{
         console.log(error);
       });
+  }
+}
+
+export function bleFavoriteAdd(deviceID) {
+  return {
+    type: BLE_FAVORITE_ADD,
+    deviceID,
+  }
+}
+
+export function bleFavoriteRemove(deviceID) {
+  return {
+    type: BLE_FAVORITE_REMOVE,
+    deviceID,
   }
 }

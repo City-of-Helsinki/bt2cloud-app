@@ -15,6 +15,8 @@ import {
   BLE_NOTIFY_ERROR,  
   BLE_NOTIFY_STARTED,
   BLE_NOTIFY_STOPPED,
+  BLE_FAVORITE_ADD,
+  BLE_FAVORITE_REMOVE,
 } from '../constants';
 const initialState = {
   started: false,
@@ -25,6 +27,7 @@ const initialState = {
   peripherals: [], // available peripherals (scanned)
   connectedPeripherals: [], // currently connected peripherals
   peripheralsWithServices: [], // peripherals with known services (not necessarily connected)
+  favoritePeripherals: [],
   connectError: null,
   readError: null,
   readHistory: [],
@@ -134,6 +137,25 @@ export default function bleReducer (state = initialState, action) {
       return {
         ...state,
         notifyingChars,
+      }
+
+    case BLE_FAVORITE_ADD: 
+      favoritePeripherals = state.favoritePeripherals;
+      if (!state.favoritePeripherals.includes(action.deviceID)) {
+        favoritePeripherals.push(action.deviceID);
+      }
+      return {
+        ...state,
+        favoritePeripherals
+      }
+    
+    case BLE_FAVORITE_REMOVE: 
+      console.log(action.deviceID);
+      console.log(state.favoritePeripherals);
+      favoritePeripherals = state.favoritePeripherals.filter(p=> p !== action.deviceID);
+      return {
+        ...state,
+        favoritePeripherals
       }
 
     default:

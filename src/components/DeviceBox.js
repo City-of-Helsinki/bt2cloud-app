@@ -11,25 +11,21 @@ import Icon from 'react-native-vector-icons/FontAwesome';
 class DeviceBox extends Component {
 	constructor(props){
 		super(props);
-
-	}
-
-	infoPress(){
-		this.setState({ collapsed: !this.state.collapsed });
 	}
 
 	render() {
 		let infoIcon = 'info';
 		let starIcon = this.props.favorite ? 'star' : 'star-o';
+		let starColor = this.props.favorite ? 'gold' : 'gold';
 		return (
 			<View>
 			<TouchableHighlight 
-				onPress={this.props.onPress} 
+				onPress={this.props.connectPress} 
 				style={this.props.style}>
 				<View style={innerContainer}>
-					<View style={iconContainer}>
-						<Icon name={starIcon} size={40} color="#000" />
-					</View>
+					<TouchableHighlight onPress={this.props.favPress} style={iconContainer}>
+						<Icon name={starIcon} size={40} color={starColor} />
+					</TouchableHighlight>
 					<View style={contentContainer}>
 					<Text style={[text, {color: this.props.connected ? 'white' : 'navy'}]}>
 						Name: {this.props.device.name}

@@ -5,5 +5,16 @@ export default {
 			str += String.fromCharCode(parseInt(hex.substr(n, 2), 16));
 		}
 		return str;
+	},
+
+	convertRealmResultsToArray: (results) => {
+		let array=[];
+
+		Object.keys(results).forEach((key)=> {
+			console.log('result: ', results[key]);
+			array.push(results[key]);
+		});
+
+		return array;
 	}
 }

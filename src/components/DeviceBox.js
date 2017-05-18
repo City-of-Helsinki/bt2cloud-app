@@ -17,10 +17,12 @@ class DeviceBox extends Component {
 		let infoIcon = 'info';
 		let starIcon = this.props.favorite ? 'star' : 'star-o';
 		let starColor = this.props.favorite ? 'gold' : 'gold';
+
+		let connectPress = this.props.inRange ? this.props.connectPress : () => console.log('not in range');
 		return (
 			<View>
 			<TouchableHighlight 
-				onPress={this.props.connectPress} 
+				onPress={connectPress} 
 				style={this.props.style}>
 				<View style={innerContainer}>
 					<TouchableHighlight onPress={this.props.favPress} style={iconContainer}>

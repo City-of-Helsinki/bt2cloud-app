@@ -12,6 +12,8 @@ import {
 
 import { Actions } from 'react-native-router-flux';
 
+import realm from '../realm';
+
 import { connect } from 'react-redux';
 import { 
 	bleStart, 
@@ -71,10 +73,27 @@ class ScanView extends Component {
 		this.props.getAvailablePeripherals();
 	}
 
-	handleConnectPeripheral() {
+	handleConnectPeripheral(data) {
 		console.log('handleConnectPeripheral');
+		console.log(data);
 		this.props.getConnectedPeripherals();
 		this.props.getAvailablePeripherals();
+
+		let name;
+		try {
+			let name = this.props.ble.peripherals.filter(p=>p.id === data.peripheral)[0].name || undefined;
+		}
+		catch(err) {
+			name = undefined;
+		}
+
+		if (!name) return;
+  	realm.write(() => {
+      realm.create('Device', {
+      	name,
+      	id: data.peripheral,
+      }, true);
+  	});		
 	}
 
 	handleDisconnectPeripheral(data) {
@@ -84,14 +103,13 @@ class ScanView extends Component {
 		let { notifyingChars, peripheralsWithServices } = this.props.ble;
 
 		if (peripheralsWithServices && peripheralsWithServices.length > 0) {
-			deviceChars = peripheralsWithServices.filter(p=>p.id === deviceID)[0].characteristics.map(c=>c.characteristic);
-			for (char in deviceChars) {
-				if (notifyingChars.includes(deviceChars[char])) {
-					console.log('found notifying char, stopping...');
-					this.props.bleNotifyStopped(deviceChars[char]);
-				}
-			}
+
+			// TODO REMOVE ALL NOTIFYING CHARS FROM STATE ON DISCONNECT
+			/*if (notifyingChars.map(c=>c.deviceID).includes(deviceID)) {
+				this.props.bleNotifyStopped(deviceChars[char]);
+			}*/
 		}
+		
 		this.props.getConnectedPeripherals();
 		this.props.getAvailablePeripherals();
 	}
@@ -123,20 +141,17 @@ class ScanView extends Component {
 		Actions.DeviceDetailView({title: device.name, device: detailedDevice});
 	}
 
-	handleFavoritePress(deviceID, favorite) {
-		if (!deviceID) return;
-		console.log('favpress');
-		console.log(deviceID);
-		favorite ? this.props.bleFavoriteRemove(deviceID) : this.props.bleFavoriteAdd(deviceID);
+	handleFavoritePress(device, favorite) {
+		if (!device) return;
+		favorite ? this.props.bleFavoriteRemove(device) : this.props.bleFavoriteAdd(device);
 	}
 
 	render() {
 		let that = this;
 		let { started, startError, scanning, scanError, peripherals, connectedPeripherals,
-			peripheralsWithServices, connectError, favoritePeripherals } = this.props.ble;
+			peripheralsWithServices, connectError } = this.props.ble;
 		console.log(this.props.ble);
-		console.log(typeof startError);
-		console.log(peripheralsWithServices.length);
+		let favoritePeripherals = peripheralsWithServices.filter(p=>p.favorite === true);
 
 		function scanText() {
 			if (scanning) return <Text style={buttonText}>Press to Stop</Text>
@@ -155,13 +170,13 @@ class ScanView extends Component {
 
 			return allDevices.map((device)=> {
 				let connected = connectedPeripherals.map(p=>p.id).includes(device.id);
-				let favorite = favoritePeripherals.includes(device.id);
+				let favorite = favoritePeripherals.map(p=>p.id).includes(device.id);
 				let inRange = peripherals.map(p=>p.id).includes(device.id);
 				return (
 				<DeviceBox
 					connectPress={that.handleConnectPress.bind(that, device)} 
 					infoPress={that.handleInfoPress.bind(that, device)}
-					favPress={that.handleFavoritePress.bind(that, device.id, favorite)}
+					favPress={that.handleFavoritePress.bind(that, device, favorite)}
 					key={device.id} 
 					device={device}
 					favorite={favorite}
@@ -292,8 +307,8 @@ function mapDispatchToProps(dispatch) {
     bleAppendReadHistory: (deviceID, service, characteristic, hex) => dispatch(
     	bleAppendReadHistory(deviceID, service, characteristic, hex)),
     bleNotifyStopped: (characteristic) => dispatch(bleNotifyStopped(characteristic)),
-    bleFavoriteAdd: (deviceID, favorite) => dispatch(bleFavoriteAdd(deviceID, favorite)),
-    bleFavoriteRemove: (deviceID, favorite) => dispatch(bleFavoriteRemove(deviceID, favorite)),
+    bleFavoriteAdd: (device, favorite) => dispatch(bleFavoriteAdd(device, favorite)),
+    bleFavoriteRemove: (device, favorite) => dispatch(bleFavoriteRemove(device, favorite)),
   };
 }
 

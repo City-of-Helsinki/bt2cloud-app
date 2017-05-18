@@ -126,6 +126,7 @@ android {
 }
 
 dependencies {
+    compile project(':realm')
     compile project(':react-native-vector-icons')
     compile project(':react-native-ble-manager')
     compile fileTree(dir: "libs", include: ["*.jar"])

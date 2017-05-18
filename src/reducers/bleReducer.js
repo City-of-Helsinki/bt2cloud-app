@@ -1,5 +1,5 @@
 import Utils from '../utils/utils';
-
+import realm from '../realm';
 import { 
   BLE_START, 
   BLE_SCAN_START, 
@@ -15,8 +15,6 @@ import {
   BLE_NOTIFY_ERROR,  
   BLE_NOTIFY_STARTED,
   BLE_NOTIFY_STOPPED,
-  BLE_FAVORITE_ADD,
-  BLE_FAVORITE_REMOVE,
 } from '../constants';
 const initialState = {
   started: false,
@@ -26,8 +24,7 @@ const initialState = {
   scanError: null,
   peripherals: [], // available peripherals (scanned)
   connectedPeripherals: [], // currently connected peripherals
-  peripheralsWithServices: [], // peripherals with known services (not necessarily connected)
-  favoritePeripherals: [],
+  peripheralsWithServices: Utils.convertRealmResultsToArray(realm.objects('Device')) || [],
   connectError: null,
   readError: null,
   readHistory: [],
@@ -80,9 +77,7 @@ export default function bleReducer (state = initialState, action) {
       }; 
 
     case BLE_UPDATE_PERIPHERALS_WITH_SERVICES:
-      peripheralsWithServices = state.peripheralsWithServices;
-      peripheralIDs = peripheralsWithServices.map(p=>p.id);
-      if (!peripheralIDs.includes(action.device.id)) peripheralsWithServices.push(action.device);
+      peripheralsWithServices = Utils.convertRealmResultsToArray(realm.objects('Device')) || [];
       return {
         ...state,
         connectError: null,
@@ -123,7 +118,9 @@ export default function bleReducer (state = initialState, action) {
 
     case BLE_NOTIFY_STARTED:
       notifyingChars = state.notifyingChars;
-      if (!notifyingChars.includes(action.characteristic)) notifyingChars.push(action.characteristic);
+      if (!notifyingChars.map(c=>c.characteristic).includes(action.characteristic)) {
+        notifyingChars.push({deviceID: action.deviceID, characteristic: action.characteristic});
+      }
 
       return {
         ...state,
@@ -132,30 +129,11 @@ export default function bleReducer (state = initialState, action) {
 
     case BLE_NOTIFY_STOPPED:
       console.log('BLE_NOTIFY_STOPPED', action.characteristic);
-      notifyingChars = state.notifyingChars.filter(c=> c !== action.characteristic);
+      notifyingChars = state.notifyingChars.filter(c=> c.id !== action.characteristic);
 
       return {
         ...state,
         notifyingChars,
-      }
-
-    case BLE_FAVORITE_ADD: 
-      favoritePeripherals = state.favoritePeripherals;
-      if (!state.favoritePeripherals.includes(action.deviceID)) {
-        favoritePeripherals.push(action.deviceID);
-      }
-      return {
-        ...state,
-        favoritePeripherals
-      }
-    
-    case BLE_FAVORITE_REMOVE: 
-      console.log(action.deviceID);
-      console.log(state.favoritePeripherals);
-      favoritePeripherals = state.favoritePeripherals.filter(p=> p !== action.deviceID);
-      return {
-        ...state,
-        favoritePeripherals
       }
 
     default:

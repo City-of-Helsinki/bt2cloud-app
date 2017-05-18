@@ -18,7 +18,9 @@ import {
   BLE_FAVORITE_REMOVE,
 } from '../constants';
 import BleManager from 'react-native-ble-manager';
-import { PermissionsAndroid } from 'react-native';
+import realm from '../realm';
+
+import Utils from '../utils/utils';
 
 
 // START BLE MANAGER ACTIONS
@@ -168,10 +170,9 @@ export function bleUpdateConnectedPeripherals(peripherals){
   } 
 }
 
-export function bleUpdatePeripheralsWithServices(device){
+export function bleUpdatePeripheralsWithServices(){
   return {
     type: BLE_UPDATE_PERIPHERALS_WITH_SERVICES,
-    device
   } 
 }
 
@@ -203,6 +204,16 @@ export function bleRead(deviceID, service, characteristic) {
     if (!deviceID || !service || !characteristic) return;
     BleManager.read(deviceID, service, characteristic)
       .then((data)=> {
+        realm.write(() => {
+          realm.create('Data', {
+            deviceID,
+            service,
+            characteristic,
+            hex: data,
+            ascii: Utils.hexDecode(data),
+            time: new Date(),
+          });
+        });
         dispatch(bleAppendReadHistory(deviceID, service, characteristic, data));
       })
       .catch((error)=>{
@@ -224,9 +235,10 @@ export function bleNotifyError(deviceID, service, characteristic, error) {
   }
 }
 
-export function bleNotifyStarted(characteristic) {
+export function bleNotifyStarted(deviceID, characteristic) {
   return {
     type: BLE_NOTIFY_STARTED,
+    deviceID,
     characteristic,
   }
 }
@@ -244,7 +256,7 @@ export function bleNotify(deviceID, service, characteristic) {
     if (!deviceID || !service || !characteristic) return;
     BleManager.startNotification(deviceID, service, characteristic)
       .then(()=> {
-        dispatch(bleNotifyStarted(characteristic))
+        dispatch(bleNotifyStarted(deviceID, characteristic))
       })
       .catch((error)=>{
         console.log(error);
@@ -259,7 +271,7 @@ export function bleNotifyStop(deviceID, service, characteristic) {
     if (!deviceID || !service || !characteristic) return;
     BleManager.stopNotification(deviceID, service, characteristic)
       .then(()=> {
-        dispatch(bleNotifyStopped(characteristic))
+        dispatch(bleNotifyStopped(deviceID, characteristic))
       })
       .catch((error)=>{
         console.log(error);
@@ -267,16 +279,20 @@ export function bleNotifyStop(deviceID, service, characteristic) {
   }
 }
 
-export function bleFavoriteAdd(deviceID) {
-  return {
-    type: BLE_FAVORITE_ADD,
-    deviceID,
+export function bleFavoriteAdd(device) {
+  return (dispatch)=> {
+    realm.write(()=>{
+      realm.create('Device', {id: device.id, name: device.name, favorite: true}, true);
+    });
+    dispatch(bleUpdatePeripheralsWithServices());
   }
 }
 
-export function bleFavoriteRemove(deviceID) {
-  return {
-    type: BLE_FAVORITE_REMOVE,
-    deviceID,
+export function bleFavoriteRemove(device) {
+  return (dispatch)=> {
+    realm.write(()=>{
+      realm.create('Device', {id: device.id, name: device.name, favorite: false}, true);
+    });
+    dispatch(bleUpdatePeripheralsWithServices());
   }
 }

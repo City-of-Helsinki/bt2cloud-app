@@ -48,7 +48,8 @@ export function bleScanStartResult(error) {
   return {
     type: BLE_SCAN_START,
     scanning: typeof error === "undefined" ? true : false,
-    error: error
+    error: error,
+    startScanByDefault: typeof error === "undefined" ? true : false,
   }
 }
 
@@ -70,7 +71,7 @@ export function bleScanStop() {
   return (dispatch) => {
     BleManager.stopScan()
       .then(() => {
-        dispatch(bleScanEnded());
+        dispatch(bleScanEnded(false));
       })
       .catch((err) => {
         console.log('scan end error');
@@ -79,9 +80,10 @@ export function bleScanStop() {
 }
 
 // SCAN ENDED
-export function bleScanEnded() {
+export function bleScanEnded(autoRestartScan=true) {
   return {
     type: BLE_SCAN_ENDED,
+    startScanByDefault: autoRestartScan,
   }
 }
 

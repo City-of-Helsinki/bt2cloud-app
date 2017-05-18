@@ -18,6 +18,7 @@ import {
 } from '../constants';
 const initialState = {
   started: false,
+  startScanByDefault: true,
   startError: null,
   scanning: false,
   scanError: null,
@@ -51,6 +52,7 @@ export default function bleReducer (state = initialState, action) {
       return {
         ...state,
         scanning: false,
+        startScanByDefault: action.startScanByDefault,
       }; 
 
     case BLE_CONNECT_ERROR:

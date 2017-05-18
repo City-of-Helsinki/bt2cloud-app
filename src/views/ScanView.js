@@ -37,6 +37,7 @@ class ScanView extends Component {
 		this.handleConnectPeripheral = this.handleConnectPeripheral.bind(this);
 		this.handleDisconnectPeripheral = this.handleDisconnectPeripheral.bind(this);
 		this.handleNotification = this.handleNotification.bind(this);
+		this.handleFavoritePress = this.handleFavoritePress.bind(this);
 		NativeAppEventEmitter
 			.addListener('BleManagerStopScan', this.handleScanEnded);
 		NativeAppEventEmitter
@@ -51,12 +52,14 @@ class ScanView extends Component {
 
 	componentDidMount() {
 		this.props.bleStart();
-		
-		setTimeout(() => {
-			if (this.props.ble.scanning) {
-				this.props.getAvailablePeripherals();
-			}
-		}, 1000);
+	}
+
+	componentDidUpdate() {
+		// if service started and startScanByDefault is true, start scan immediately
+		if (this.props.ble.started && !this.props.ble.scanning
+			&& this.props.ble.startScanByDefault) {
+			this.props.bleScanStart();
+		}
 	}
 
 	// this gets called multiple times per device upon discovery
@@ -69,27 +72,26 @@ class ScanView extends Component {
 	handleConnectPeripheral() {
 		console.log('handleConnectPeripheral');
 		this.props.getConnectedPeripherals();
+		this.props.getAvailablePeripherals();
 	}
 
 	handleDisconnectPeripheral(data) {
 		console.log('handleDisconnectPeripheral', data);
 		if (!data.hasOwnProperty('peripheral')) return;
 		let deviceID = data.peripheral;
-
 		let { notifyingChars, peripheralsWithServices } = this.props.ble;
-		console.log(peripheralsWithServices.filter(p=>p.id === deviceID)[0]);
-		deviceChars = peripheralsWithServices.filter(p=>p.id === deviceID)[0].characteristics.map(c=>c.characteristic);
-		console.log('deviceChars:', deviceChars);
-		for (char in deviceChars) {
-			console.log(deviceChars[char]);
-			console.log(notifyingChars);
-			if (notifyingChars.includes(deviceChars[char])) {
-				console.log('found notifying char, stopping...');
-				this.props.bleNotifyStopped(deviceChars[char]);
+
+		if (peripheralsWithServices && peripheralsWithServices.length > 0) {
+			deviceChars = peripheralsWithServices.filter(p=>p.id === deviceID)[0].characteristics.map(c=>c.characteristic);
+			for (char in deviceChars) {
+				if (notifyingChars.includes(deviceChars[char])) {
+					console.log('found notifying char, stopping...');
+					this.props.bleNotifyStopped(deviceChars[char]);
+				}
 			}
 		}
-
 		this.props.getConnectedPeripherals();
+		this.props.getAvailablePeripherals();
 	}
 
 	handleNotification(data) {
@@ -118,6 +120,10 @@ class ScanView extends Component {
 		Actions.DeviceDetailView({title: device.name, device: detailedDevice});
 	}
 
+	handleFavoritePress(device) {
+
+	}
+
 	render() {
 		let that = this;
 		let { started, startError, scanning, scanError, peripherals, connectedPeripherals,
@@ -132,9 +138,18 @@ class ScanView extends Component {
 		}
 
 		function renderFoundDevices() {
-			console.log(peripherals);
-			return peripherals.map((device)=> {
+			console.log(peripheralsWithServices);
+			let unavailableDevices = peripheralsWithServices.filter(p=>{
+				let availableIDs = peripherals.map(p2=>p2.id);
+
+				return !availableIDs.includes(p.id);
+			});
+			
+			allDevices = peripherals.concat(unavailableDevices);
+
+			return allDevices.map((device)=> {
 				let connected = connectedPeripherals.map(p=>p.id).includes(device.id);
+				let inRange = peripherals.map(p=>p.id).includes(device.id);
 				return (
 				<DeviceBox
 					onPress={that.handleConnectPress.bind(that, device)} 
@@ -142,10 +157,11 @@ class ScanView extends Component {
 					key={device.id} 
 					device={device}
 					connected={connected}
+					inRange={inRange}
 					style={[
 						deviceBox, 
 						{
-							backgroundColor: connected ? 'navy' : 'white',
+							backgroundColor: !inRange ? '#555' : connected ? 'navy' : 'white',
 						}]
 					}>
 				</DeviceBox>

@@ -20,6 +20,7 @@ class DeviceBox extends Component {
 
 	render() {
 		let infoIcon = 'info';
+		let starIcon = this.props.favorite ? 'star' : 'star-o';
 		return (
 			<View>
 			<TouchableHighlight 
@@ -27,9 +28,7 @@ class DeviceBox extends Component {
 				style={this.props.style}>
 				<View style={innerContainer}>
 					<View style={iconContainer}>
-					{this.props.connected && 
-						<Icon name="check-circle" size={30} color="#FFF" />
-					}
+						<Icon name={starIcon} size={40} color="#000" />
 					</View>
 					<View style={contentContainer}>
 					<Text style={[text, {color: this.props.connected ? 'white' : 'navy'}]}>

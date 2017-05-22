@@ -7,7 +7,7 @@ import {
   BLE_CONNECT_ERROR,
   BLE_UPDATE_CONNECTED_PERIPHERALS,
   BLE_UPDATE_AVAILABLE_PERIPHERALS,
-  BLE_UPDATE_PERIPHERALS_WITH_SERVICES,
+  BLE_UPDATE_KNOWN_PERIPHERALS,
   BLE_READ,
   BLE_READ_ERROR,
   BLE_APPEND_READ_HISTORY,
@@ -24,10 +24,10 @@ const initialState = {
   scanError: null,
   peripherals: [], // available peripherals (scanned)
   connectedPeripherals: [], // currently connected peripherals
-  peripheralsWithServices: Utils.convertRealmResultsToArray(realm.objects('Device')) || [],
+  knownPeripherals: Utils.convertRealmResultsToArray(realm.objects('Device')) || [], // in database
+  peripheralServiceData: [], // service&charac info received on connect. ad hoc info; not persisted to database.
   connectError: null,
   readError: null,
-  readHistory: [],
   notifyError: null,
   notifyingChars: [],
 };
@@ -76,12 +76,20 @@ export default function bleReducer (state = initialState, action) {
         connectedPeripherals,
       }; 
 
-    case BLE_UPDATE_PERIPHERALS_WITH_SERVICES:
-      peripheralsWithServices = Utils.convertRealmResultsToArray(realm.objects('Device')) || [];
+    case BLE_UPDATE_KNOWN_PERIPHERALS:
+      knownPeripherals = Utils.convertRealmResultsToArray(realm.objects('Device')) || [];
+      peripheralServiceData = state.peripheralServiceData;
+      if (action.data) {
+        if (peripheralServiceData.length === 0 || !peripheralServiceData.map(p=>p.id).includes(action.data.id)) {
+          peripheralServiceData.push(action.data);
+        }
+      }
+
       return {
         ...state,
         connectError: null,
-        peripheralsWithServices
+        knownPeripherals,
+        peripheralServiceData,
       };
 
     case BLE_READ_ERROR:
@@ -91,20 +99,7 @@ export default function bleReducer (state = initialState, action) {
       }
 
     case BLE_APPEND_READ_HISTORY:  
-      let { deviceID, service, characteristic, data } = action;
-      let hex = data;
-      let value = Utils.hexDecode(hex);
-      let date = new Date();
-      let readHistory = state.readHistory;
-      readHistory.push({
-        deviceID,
-        service,
-        characteristic,
-        hex,
-        value,
-        date,
-      });
-
+      let readHistory = [];
     return {
       ...state,
       readHistory,
@@ -129,7 +124,7 @@ export default function bleReducer (state = initialState, action) {
 
     case BLE_NOTIFY_STOPPED:
       console.log('BLE_NOTIFY_STOPPED', action.characteristic);
-      notifyingChars = state.notifyingChars.filter(c=> c.id !== action.characteristic);
+      notifyingChars = state.notifyingChars.filter(c=> c.characteristic !== action.characteristic);
 
       return {
         ...state,

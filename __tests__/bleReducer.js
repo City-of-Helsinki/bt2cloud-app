@@ -85,11 +85,11 @@ describe('BLE_UPDATE_CONNECTED_PERIPHERALS', () => {
 	});
 });
 
-describe('BLE_UPDATE_PERIPHERALS_WITH_SERVICES', () => {
+describe('BLE_UPDATE_KNOWN_PERIPHERALS', () => {
 	
-	test('should push peripheral to peripheralsWithServices ONLY IF its ID is not already there', () => {			
+	test('should push peripheral to knownPeripherals ONLY IF its ID is not already there', () => {			
 		const initialState = {
-			peripheralsWithServices: [
+			knownPeripherals: [
 				{name: 'foo', id: 'a1'}
 			],
 			connectError: 'whatever'
@@ -102,11 +102,11 @@ describe('BLE_UPDATE_PERIPHERALS_WITH_SERVICES', () => {
 
 		expect(
 			bleReducer(initialState, {
-				type: types.BLE_UPDATE_PERIPHERALS_WITH_SERVICES, 
+				type: types.BLE_UPDATE_KNOWN_PERIPHERALS, 
 				device: newDevice
 			}))
 				.toEqual({
-					peripheralsWithServices: [
+					knownPeripherals: [
 						{name: 'foo', id: 'a1'},
 						{name: 'bar', id: 'a2'},
 					],
@@ -115,7 +115,7 @@ describe('BLE_UPDATE_PERIPHERALS_WITH_SERVICES', () => {
 
 		expect(
 			bleReducer(initialState, {
-				type: types.BLE_UPDATE_PERIPHERALS_WITH_SERVICES, 
+				type: types.BLE_UPDATE_KNOWN_PERIPHERALS, 
 				device: oldDevice
 			}))
 				.toEqual({...initialState, connectError: null});

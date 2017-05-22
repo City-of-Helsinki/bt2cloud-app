@@ -8,6 +8,7 @@ import {
 	ScrollView,
 	ActivityIndicator,
 	Dimensions,
+	AppState,
 } from 'react-native';
 
 import { Actions } from 'react-native-router-flux';
@@ -30,6 +31,7 @@ import {
 	bleFavoriteRemove,
 } from '../actions/actions';
 
+import Utils from '../utils/utils';
 import DeviceBox from '../components/DeviceBox';
 
 class ScanView extends Component {
@@ -78,36 +80,22 @@ class ScanView extends Component {
 		console.log(data);
 		this.props.getConnectedPeripherals();
 		this.props.getAvailablePeripherals();
-
-		let name;
-		try {
-			let name = this.props.ble.peripherals.filter(p=>p.id === data.peripheral)[0].name || undefined;
-		}
-		catch(err) {
-			name = undefined;
-		}
-
-		if (!name) return;
-  	realm.write(() => {
-      realm.create('Device', {
-      	name,
-      	id: data.peripheral,
-      }, true);
-  	});		
 	}
 
 	handleDisconnectPeripheral(data) {
+		if (!data) return;
 		console.log('handleDisconnectPeripheral', data);
 		if (!data.hasOwnProperty('peripheral')) return;
 		let deviceID = data.peripheral;
-		let { notifyingChars, peripheralsWithServices } = this.props.ble;
+		let { notifyingChars, peripheralServiceData } = this.props.ble;
 
-		if (peripheralsWithServices && peripheralsWithServices.length > 0) {
+		if (peripheralServiceData && peripheralServiceData.length > 0) {
 
 			// TODO REMOVE ALL NOTIFYING CHARS FROM STATE ON DISCONNECT
-			/*if (notifyingChars.map(c=>c.deviceID).includes(deviceID)) {
-				this.props.bleNotifyStopped(deviceChars[char]);
-			}*/
+			let disconnectedDevicesChars = notifyingChars.filter(c=>c.deviceID === deviceID)
+				.map(ch=>ch.characteristic);
+			console.log('disc device chars:', disconnectedDevicesChars);
+			disconnectedDevicesChars.forEach(dc => this.props.bleNotifyStopped(dc));
 		}
 		
 		this.props.getConnectedPeripherals();
@@ -115,9 +103,28 @@ class ScanView extends Component {
 	}
 
 	handleNotification(data) {
+		if (!data) return;
+		console.log ('new notification! ', Utils.hexDecode(data.value));
+		let deviceID = data.peripheral;
+		let characteristic = data.characteristic
+		let service = data.service
+		let hex = data.value;
+		let ascii = Utils.hexDecode(hex);
+		realm.write(()=> {
+			realm.create('Data', {
+				deviceID,
+				characteristic,
+				service,
+				hex,
+				ascii,
+				time: new Date(),
+			});
+		});
 
-		let deviceID = data.peripheral, characteristic = data.characteristic, service = data.service, hex = data.value;
-		this.props.bleAppendReadHistory(deviceID, service, characteristic, hex);
+		// prevent UI re-rendering in background
+		if (AppState.currentState === 'active') {
+			this.props.bleAppendReadHistory(deviceID, service, characteristic, hex);
+		}
 	}
 
 	handleScanEnded() {
@@ -137,7 +144,7 @@ class ScanView extends Component {
 
 	handleInfoPress(device) {
 
-		detailedDevice = this.props.ble.peripheralsWithServices.filter(p=>p.id === device.id)[0];
+		detailedDevice = this.props.ble.peripheralServiceData.filter(p=>p.id === device.id)[0];
 		Actions.DeviceDetailView({title: device.name, device: detailedDevice});
 	}
 
@@ -149,9 +156,9 @@ class ScanView extends Component {
 	render() {
 		let that = this;
 		let { started, startError, scanning, scanError, peripherals, connectedPeripherals,
-			peripheralsWithServices, connectError } = this.props.ble;
-		console.log(this.props.ble);
-		let favoritePeripherals = peripheralsWithServices.filter(p=>p.favorite === true);
+			knownPeripherals, connectError } = this.props.ble;
+		// console.log(this.props.ble);
+		let favoritePeripherals = knownPeripherals.filter(p=>p.favorite === true);
 
 		function scanText() {
 			if (scanning) return <Text style={buttonText}>Press to Stop</Text>
@@ -159,16 +166,14 @@ class ScanView extends Component {
 		}
 
 		function renderFoundDevices() {
-			console.log(peripheralsWithServices);
-			let unavailableDevices = peripheralsWithServices.filter(p=>{
+			console.log(knownPeripherals);
+			let unavailableDevices = knownPeripherals.filter(p=>{
 				let availableIDs = peripherals.map(p2=>p2.id);
 
 				return !availableIDs.includes(p.id);
 			});
 			
-			allDevices = peripherals.concat(unavailableDevices);
-
-			return allDevices.map((device)=> {
+			allDevices = peripherals.concat(unavailableDevices).map((device)=> {
 				let connected = connectedPeripherals.map(p=>p.id).includes(device.id);
 				let favorite = favoritePeripherals.map(p=>p.id).includes(device.id);
 				let inRange = peripherals.map(p=>p.id).includes(device.id);
@@ -190,6 +195,21 @@ class ScanView extends Component {
 					}>
 				</DeviceBox>
 				);
+			});
+
+			// sort first by connection status, then by availability, then favoriteness
+			return allDevices.sort((a,b)=> {
+				if (a.props.connected === b.props.connected) {
+					if (a.props.inRange === b.props.inRange) {
+						return a.props.favorite === b.props.favorite ? 0 : a.props.favorite ? -1 : 1;
+					}
+					else {
+						return a.props.inRange ? -1 : 1;
+					}
+				}
+				else {
+					return a.props.connected ? -1 : 1;
+				}
 			});
 		}
 

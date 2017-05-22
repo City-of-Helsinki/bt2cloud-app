@@ -9,10 +9,11 @@ import {
 	ActivityIndicator,
 	FlatList,
 	Dimensions,
+	AppState,
 } from 'react-native';
 
 import { connect } from 'react-redux';
-
+import realm from '../realm';
 import { 
 	bleConnect, 
 	bleDisconnect,
@@ -20,6 +21,7 @@ import {
 	bleNotify,
 	bleNotifyStop,
 } from '../actions/actions';
+import Utils from '../utils/utils';
 
 import ServiceBox from '../components/ServiceBox';
 import CharBox from '../components/CharBox';
@@ -33,13 +35,13 @@ class DeviceDetailView extends Component {
 		this.handleConnectPress = this.handleConnectPress.bind(this);
 	}
 
-	componentDidUpdate() {
+	shouldComponentUpdate() {
+		return AppState.currentState === 'active';
 	}
 
 	handleReadPress(service, characteristic) {
 		let { device } = this.props;
 		let connected = this.props.ble.connectedPeripherals.map(p=>p.id).includes(device.id);
-		console.log(connected);
 		if (!connected) return;
 		this.props.bleRead(device.id, service, characteristic);
 	}
@@ -49,7 +51,7 @@ class DeviceDetailView extends Component {
 		let connected = this.props.ble.connectedPeripherals.map(p=>p.id).includes(device.id);
 		if (!connected) return;
 
-		let notifying = this.props.ble.notifyingChars.includes(characteristic);
+		let notifying = this.props.ble.notifyingChars.map(c=>c.characteristic).includes(characteristic);
 		notifying ? this.props.bleNotifyStop(device.id, service, characteristic) : this.props.bleNotify(device.id, service, characteristic)
 	}
 
@@ -61,9 +63,8 @@ class DeviceDetailView extends Component {
 
 	render() {
 		let { started, startError, scanning, scanError, peripherals, connectedPeripherals,
-			peripheralsWithServices, connectError, readHistory, notifyingChars } = this.props.ble;
+			knownPeripherals, connectError, readHistory, notifyingChars } = this.props.ble;
 		let { device } = this.props;
-		console.log(device.services);
 		let connected = connectedPeripherals.map(p=>p.id).includes(device.id);
 
 
@@ -74,9 +75,8 @@ class DeviceDetailView extends Component {
 						<TouchableHighlight onPress={this.handleConnectPress} style={button}>
 							<Text style={buttonText}>{connected ? 'Disconnect' : 'Connect'}</Text>
 						</TouchableHighlight>					
-						{device.services.map(s => {
+						{device.services && device.services.map(s => {
 							let chars = device.characteristics.filter(c => c.service === s.uuid);
-							console.log('chars: ', chars);
 							return(
 							<ServiceBox 
 								key={s.uuid} 
@@ -84,13 +84,13 @@ class DeviceDetailView extends Component {
 								connected={connected}
 								style={[serviceBox, {backgroundColor: connected ? 'navy' : '#444' }]}>
 								{chars.map(c=>{
-									console.log('c: ', c);
 									let read = c.properties.hasOwnProperty('Read') && c.properties.Read === 'Read';
 									let notify = c.properties.hasOwnProperty('Notify') && c.properties.Notify === 'Notify';
-									let newestValue = readHistory.filter
-										(v=>v.characteristic === c.characteristic && v.deviceID === device.id)
-										.slice(-1)[0];
-									let notifying = notifyingChars.includes(c.characteristic);
+									let newestValue = Utils.convertRealmResultsToArray(realm.objects('Data')
+										.filtered('characteristic == "' + c.characteristic +'"').slice(-1))[0];
+									let valueCount = realm.objects('Data')
+										.filtered('characteristic == "' + c.characteristic +'"').length;
+									let notifying = notifyingChars.map(ch=>ch.characteristic).includes(c.characteristic);
 									return (
 										<CharBox
 											key={c.characteristic}
@@ -100,6 +100,7 @@ class DeviceDetailView extends Component {
 											notify={notify}
 											notifying={notifying}
 											newestValue={newestValue}
+											valueCount={valueCount}
 											connected={connected}
 											readPress={this.handleReadPress}
 											notifyPress={this.handleNotifyPress}

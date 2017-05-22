@@ -5,7 +5,7 @@ import {
   BLE_CONNECT_ERROR,
   BLE_UPDATE_CONNECTED_PERIPHERALS,
   BLE_UPDATE_AVAILABLE_PERIPHERALS,
-  BLE_UPDATE_PERIPHERALS_WITH_SERVICES,
+  BLE_UPDATE_KNOWN_PERIPHERALS,
   BLE_READ,
   BLE_READ_ERROR,
   BLE_APPEND_READ_HISTORY,
@@ -106,7 +106,11 @@ export function bleConnect(device) {
     BleManager.connect(device.id)
       .then((data)=>{
         console.log ('got data: ', data);
-        dispatch(bleUpdatePeripheralsWithServices(data));
+        let { id, name } = data;
+        realm.write(()=>{
+          realm.create('Device', {id, name}, true);
+        });        
+        dispatch(bleUpdateKnownPeripherals(data));
       })
       .catch((err) => {
         console.log ('error connecting to peripheral', err);
@@ -170,9 +174,10 @@ export function bleUpdateConnectedPeripherals(peripherals){
   } 
 }
 
-export function bleUpdatePeripheralsWithServices(){
+export function bleUpdateKnownPeripherals(data){
   return {
-    type: BLE_UPDATE_PERIPHERALS_WITH_SERVICES,
+    type: BLE_UPDATE_KNOWN_PERIPHERALS,
+    data,
   } 
 }
 
@@ -271,7 +276,7 @@ export function bleNotifyStop(deviceID, service, characteristic) {
     if (!deviceID || !service || !characteristic) return;
     BleManager.stopNotification(deviceID, service, characteristic)
       .then(()=> {
-        dispatch(bleNotifyStopped(deviceID, characteristic))
+        dispatch(bleNotifyStopped(characteristic))
       })
       .catch((error)=>{
         console.log(error);
@@ -284,7 +289,7 @@ export function bleFavoriteAdd(device) {
     realm.write(()=>{
       realm.create('Device', {id: device.id, name: device.name, favorite: true}, true);
     });
-    dispatch(bleUpdatePeripheralsWithServices());
+    dispatch(bleUpdateKnownPeripherals());
   }
 }
 
@@ -293,6 +298,6 @@ export function bleFavoriteRemove(device) {
     realm.write(()=>{
       realm.create('Device', {id: device.id, name: device.name, favorite: false}, true);
     });
-    dispatch(bleUpdatePeripheralsWithServices());
+    dispatch(bleUpdateKnownPeripherals());
   }
 }

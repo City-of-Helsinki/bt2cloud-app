@@ -6,6 +6,7 @@ import {
 	StyleSheet,
 } from 'react-native';
 
+import moment from 'moment';
 import Icon from 'react-native-vector-icons/FontAwesome';
 
 const CharBox = (props) => {
@@ -35,11 +36,17 @@ const CharBox = (props) => {
 					<View style={innerContainer}>
 						<View style={contentContainer}>
 							<Text style={text}>
-								Value: {props.newestValue.value}
+								Value: {props.newestValue.ascii}
 							</Text>
 							<Text style={text}>
 								Hex: {props.newestValue.hex}
 							</Text>
+							<Text style={text}>
+								Time: {moment(props.newestValue.time).format()}
+							</Text>
+							<Text style={text}>
+								No. of objects: {props.valueCount}
+							</Text>							
 						</View>				
 					</View>
 				}

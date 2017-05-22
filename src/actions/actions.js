@@ -209,16 +209,21 @@ export function bleRead(deviceID, service, characteristic) {
     if (!deviceID || !service || !characteristic) return;
     BleManager.read(deviceID, service, characteristic)
       .then((data)=> {
+
+        let jsonObject = {
+          deviceID,
+          service,
+          characteristic,
+          hex: data,
+          ascii: Utils.hexDecode(data),
+          time: new Date(),
+        };
+
         realm.write(() => {
-          realm.create('Data', {
-            deviceID,
-            service,
-            characteristic,
-            hex: data,
-            ascii: Utils.hexDecode(data),
-            time: new Date(),
-          });
+          realm.create('Data', jsonObject);
         });
+
+        Utils.writeToFile(jsonObject);
         dispatch(bleAppendReadHistory(deviceID, service, characteristic, data));
       })
       .catch((error)=>{

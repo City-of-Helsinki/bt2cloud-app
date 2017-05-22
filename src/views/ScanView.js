@@ -110,16 +110,18 @@ class ScanView extends Component {
 		let service = data.service
 		let hex = data.value;
 		let ascii = Utils.hexDecode(hex);
-		realm.write(()=> {
-			realm.create('Data', {
-				deviceID,
-				characteristic,
-				service,
-				hex,
-				ascii,
-				time: new Date(),
-			});
-		});
+    let jsonObject = {
+      deviceID,
+      service,
+      characteristic,
+      hex,
+      ascii,
+      time: new Date(),
+    };
+    realm.write(() => {
+      realm.create('Data', jsonObject);
+    });
+    Utils.writeToFile(jsonObject);
 
 		// prevent UI re-rendering in background
 		if (AppState.currentState === 'active') {

@@ -20,3 +20,7 @@ export const BLE_NOTIFY_ERROR = 'BLE_NOTIFY_ERROR';
 
 export const BLE_FAVORITE_ADD = 'BLE_FAVORITE_ADD';
 export const BLE_FAVORITE_REMOVE = 'BLE_FAVORITE_REMOVE';
+
+//
+
+export const FILE_SAVE_PATH = '/unsent/';

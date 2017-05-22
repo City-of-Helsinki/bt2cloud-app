@@ -1,3 +1,8 @@
+import fs from 'react-native-fs';
+import moment from 'moment';
+
+import { FILE_SAVE_PATH } from '../constants';
+
 export default {
 	hexDecode: (hex) => {
 		let str = '';
@@ -16,5 +21,37 @@ export default {
 		});
 
 		return array;
+	},
+
+	writeToFile: (jsonObject) => {
+		let filename = moment(jsonObject.time).format('YYYY-MM-DD-HH') + '_' + jsonObject.characteristic + '.txt';
+		let dirpath = fs.ExternalDirectoryPath + FILE_SAVE_PATH;
+		let filepath = dirpath + filename;
+		console.log(filepath);
+		let writeString = JSON.stringify(jsonObject) + '\r\n';
+		console.log(writeString);
+
+		fs.mkdir(dirpath);
+		fs.exists(filepath)
+			.then((exists)=> {
+				if (exists) {
+					fs.appendFile(filepath, writeString)
+						.then(()=> {
+							console.log('success appending');
+						})
+						.catch((err)=>{
+							console.log('failure: ', err);
+						});					
+				}
+				else {
+						fs.writeFile(filepath, writeString)
+							.then(()=> {
+								console.log('success writing');
+							})
+							.catch((err)=>{
+								console.log('failure: ', err);
+							});		
+				}
+			});
 	}
 }

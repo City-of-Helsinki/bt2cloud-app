@@ -20,7 +20,6 @@ const Form = t.form.Form;
 const Protocol = t.enums({
 	http: 'http://',
 	https: 'https://',
-	wss: 'wss://',
 });
 
 const Backend = t.struct({

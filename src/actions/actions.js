@@ -112,7 +112,14 @@ export function bleConnect(device) {
     BleManager.connect(device.id)
       .then((data)=>{
         console.log ('got data: ', data);
-        let { id, name } = data;
+        let { id } = data;
+        let name;
+        try {
+          name = data.name;
+        }
+        catch(err) {
+          name = 'no name';
+        }
         realm.write(()=>{
           realm.create('Device', {id, name}, true);
         });        
@@ -143,7 +150,6 @@ export function getAvailablePeripherals() {
   return (dispatch) => {
     BleManager.getDiscoveredPeripherals([])
       .then((peripherals) => {
-        console.log('Available: ', peripherals);
         dispatch(bleUpdateAvailablePeripherals(peripherals));
       })
       .catch((err) => {

@@ -5,14 +5,15 @@ import TabBar from '../components/TabBar';
 
 import ScanView from './ScanView';
 import BackendsView from './BackendsView';
+import SettingsView from './SettingsView';
 
 class MainView extends Component {
 	render() {
 	  return (
-	    <ScrollableTabView renderTabBar={() => <TabBar someProp={'here'} />}>
+	    <ScrollableTabView renderTabBar={() => <TabBar />}>
 	      <ScanView tabLabel="Nearby devices" />
 	      <BackendsView tabLabel="Backends" />
-	      <ScanView tabLabel="App Settings" />
+	      <SettingsView tabLabel="App Settings" />
 	    </ScrollableTabView>
 	  );
 	}

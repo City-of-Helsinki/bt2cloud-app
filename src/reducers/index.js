@@ -1,8 +1,10 @@
 import { combineReducers } from 'redux';
 import ble from './bleReducer';
+import settings from './settingsReducer';
 
 const rootReducer = combineReducers({
-    ble
+    ble,
+    settings,
 });
 
 export default rootReducer;

@@ -16,10 +16,12 @@ import {
   BLE_NOTIFY_STOPPED,
   BLE_FAVORITE_ADD,
   BLE_FAVORITE_REMOVE,
+  SETTINGS_CHANGE_FLUSH_TO_DISK,
+  SETTINGS_CHANGE_GPS_INTERVAL,
 } from '../constants';
+
 import BleManager from 'react-native-ble-manager';
 import realm from '../realm';
-
 import Utils from '../utils/utils';
 
 
@@ -304,5 +306,23 @@ export function bleFavoriteRemove(device) {
       realm.create('Device', {id: device.id, name: device.name, favorite: false}, true);
     });
     dispatch(bleUpdateKnownPeripherals());
+  }
+}
+
+// END BLE MANAGER ACTIONS
+
+// START SETTINGS ACTIONS
+
+export function settingsChangeFlushToDisk(value) {
+  return {
+    type: SETTINGS_CHANGE_FLUSH_TO_DISK,
+    value,
+  }
+}
+
+export function settingsChangeGPSInterval(value) {
+  return {
+    type: SETTINGS_CHANGE_GPS_INTERVAL,
+    value,
   }
 }

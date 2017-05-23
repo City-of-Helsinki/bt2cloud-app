@@ -19,6 +19,7 @@ import {
   SETTINGS_CHANGE_FLUSH_TO_DISK,
   SETTINGS_CHANGE_GPS_INTERVAL,
   SETTINGS_SET_DEVICE_INFO,
+  FILE_TAG_DATA,
 } from '../constants';
 
 import BleManager from 'react-native-ble-manager';
@@ -143,7 +144,6 @@ export function getAvailablePeripherals() {
     BleManager.getDiscoveredPeripherals([])
       .then((peripherals) => {
         console.log('Available: ', peripherals);
-        peripherals = peripherals.filter(p=> p.hasOwnProperty('name') && p.name.length > 0);
         dispatch(bleUpdateAvailablePeripherals(peripherals));
       })
       .catch((err) => {
@@ -228,7 +228,7 @@ export function bleRead(deviceID, service, characteristic) {
           realm.create('Data', jsonObject);
         });
 
-        Utils.writeToFile(jsonObject);
+        Utils.writeToFile(jsonObject, FILE_TAG_DATA);
         dispatch(bleAppendReadHistory(deviceID, service, characteristic, data));
       })
       .catch((error)=>{

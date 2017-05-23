@@ -18,6 +18,19 @@ class App extends Component {
 
 	componentDidMount() {
 		this.props.getDeviceInfo();
+    navigator.geolocation.getCurrentPosition((position) => {
+      var lastPosition = JSON.stringify(position);
+      console.log(lastPosition);
+    });
+    this.watchID = navigator.geolocation.watchPosition((position) => {
+      var lastPosition = JSON.stringify(position);
+      console.log(lastPosition);
+    });
+
+	}
+
+	componentWillUnmount() {
+		if (this.watchID) navigator.geolocation.clearWatch(this.watchID);
 	}
 
 	render() {

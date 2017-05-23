@@ -62,7 +62,6 @@ export default function bleReducer (state = initialState, action) {
       }
 
     case BLE_UPDATE_AVAILABLE_PERIPHERALS:
-      console.log('update peripherals to: ', action.peripherals);
       peripherals = action.peripherals;
       return {
         ...state,
@@ -123,7 +122,6 @@ export default function bleReducer (state = initialState, action) {
       }
 
     case BLE_NOTIFY_STOPPED:
-      console.log('BLE_NOTIFY_STOPPED', action.characteristic);
       notifyingChars = state.notifyingChars.filter(c=> c.characteristic !== action.characteristic);
 
       return {

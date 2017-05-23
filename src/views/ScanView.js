@@ -31,6 +31,10 @@ import {
 	bleFavoriteRemove,
 } from '../actions/actions';
 
+import {
+	FILE_TAG_DATA
+} from '../constants';
+
 import Utils from '../utils/utils';
 import DeviceBox from '../components/DeviceBox';
 
@@ -79,20 +83,16 @@ class ScanView extends Component {
 	// this gets called multiple times per device upon discovery
 	// cannot be prevented on android
 	handleDiscoverPeripheral(data) {
-		console.log(data);
 		this.props.getAvailablePeripherals();
 	}
 
 	handleConnectPeripheral(data) {
-		console.log('handleConnectPeripheral');
-		console.log(data);
 		this.props.getConnectedPeripherals();
 		this.props.getAvailablePeripherals();
 	}
 
 	handleDisconnectPeripheral(data) {
 		if (!data) return;
-		console.log('handleDisconnectPeripheral', data);
 		if (!data.hasOwnProperty('peripheral')) return;
 		let deviceID = data.peripheral;
 		let { notifyingChars, peripheralServiceData } = this.props.ble;
@@ -129,7 +129,7 @@ class ScanView extends Component {
     realm.write(() => {
       realm.create('Data', jsonObject);
     });
-    Utils.writeToFile(jsonObject);
+    Utils.writeToFile(jsonObject, FILE_TAG_DATA);
 
 		// prevent UI re-rendering in background
 		if (AppState.currentState === 'active') {
@@ -176,7 +176,6 @@ class ScanView extends Component {
 		}
 
 		function renderFoundDevices() {
-			console.log(knownPeripherals);
 			let unavailableDevices = knownPeripherals.filter(p=>{
 				let availableIDs = peripherals.map(p2=>p2.id);
 

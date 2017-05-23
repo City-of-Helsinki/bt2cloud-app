@@ -23,8 +23,10 @@ export default {
 		return array;
 	},
 
-	writeToFile: (jsonObject) => {
-		let filename = moment(jsonObject.time).format('YYYY-MM-DD-HH') + '_' + jsonObject.characteristic + '.txt';
+	writeToFile: (jsonObject, file_tag) => {
+		if (!file_tag) file_tag ='file';
+		
+		let filename = moment(jsonObject.time).format('YYYY-MM-DD-HH') + '_' + file_tag + '.txt';
 		let dirpath = fs.ExternalDirectoryPath + FILE_SAVE_PATH;
 		let filepath = dirpath + filename;
 		console.log(filepath);

@@ -18,9 +18,12 @@ import {
   BLE_FAVORITE_REMOVE,
   SETTINGS_CHANGE_FLUSH_TO_DISK,
   SETTINGS_CHANGE_GPS_INTERVAL,
+  SETTINGS_SET_DEVICE_INFO,
 } from '../constants';
 
 import BleManager from 'react-native-ble-manager';
+import DeviceInfo from 'react-native-device-info';
+
 import realm from '../realm';
 import Utils from '../utils/utils';
 
@@ -324,5 +327,25 @@ export function settingsChangeGPSInterval(value) {
   return {
     type: SETTINGS_CHANGE_GPS_INTERVAL,
     value,
+  }
+}
+
+export function settingsSetDeviceInfo(id, model, os) {
+  return {
+    type: SETTINGS_SET_DEVICE_INFO,
+    id,
+    model,
+    os,
+  }
+}
+
+export function getDeviceInfo() {
+  return async (dispatch)=> {
+    let id = await DeviceInfo.getUniqueID();
+    let model = await DeviceInfo.getModel();
+    let systemName = await DeviceInfo.getSystemName();
+    let systemVersion = await DeviceInfo.getSystemVersion();
+    let os = systemName + ' ' + systemVersion;
+    dispatch(settingsSetDeviceInfo(id, model, os));
   }
 }

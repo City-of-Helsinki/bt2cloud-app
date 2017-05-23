@@ -3,6 +3,7 @@ import realm from '../realm';
 import { 
   SETTINGS_CHANGE_FLUSH_TO_DISK, 
   SETTINGS_CHANGE_GPS_INTERVAL,
+  SETTINGS_SET_DEVICE_INFO,
 } from '../constants';
 
 const initialState = {
@@ -13,6 +14,7 @@ const initialState = {
   },
   flushToDiskInterval: 50,
   GPSInterval: 30,
+  initializing: true,
 };
 
 export default function settingsReducer (state = initialState, action) {
@@ -27,6 +29,17 @@ export default function settingsReducer (state = initialState, action) {
       return {
         ...state,
         GPSInterval: action.value,
+      }
+    case SETTINGS_SET_DEVICE_INFO:
+      let { id, model, os } = action;
+      return {
+        ...state,
+        deviceInfo: {
+          id,
+          model,
+          os,
+        },
+        initializing: false,
       }
 
     default:

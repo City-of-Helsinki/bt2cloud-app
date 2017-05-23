@@ -12,8 +12,8 @@ const initialState = {
     model: 'AiFöyn',
     os: '66.6',
   },
-  flushToDiskInterval: 50,
-  GPSInterval: 30,
+  flushToDiskInterval: Utils.convertRealmResultsToArray(realm.objects('Settings'))[0].flushToDiskInterval,
+  GPSInterval: Utils.convertRealmResultsToArray(realm.objects('Settings'))[0].saveGPSInterval,
   initializing: true,
 };
 

@@ -28,11 +28,22 @@ class SettingsView extends Component {
 	}
 
 	saveDiskIntervalToDB(value) {
+		realm.write(()=>{
+			realm.create('Settings', {
+				name: 'settings',
+				flushToDiskInterval: value,
+			}, true);
+		});
 
 	}
 	
 	saveGPSIntervalToDB(value) {
-		
+		realm.write(()=>{
+			realm.create('Settings', {
+				name: 'settings',
+				saveGPSInterval: value,
+			}, true);
+		});
 	}
 
 	render() {
@@ -53,6 +64,7 @@ class SettingsView extends Component {
 							style={slider}
 							step={1}
 							onValueChange={(value)=>this.props.settingsChangeFlushToDisk(value)}
+							onSlidingComplete={(value)=>this.saveDiskIntervalToDB(value)}
 						/>
 						<Text style={sliderText}>Record GPS location every {GPSInterval} seconds</Text>
 						<Slider 
@@ -62,6 +74,7 @@ class SettingsView extends Component {
 							style={slider}
 							step={10}
 							onValueChange={(value)=>this.props.settingsChangeGPSInterval(value)}
+							onSlidingComplete={(value)=>this.saveGPSIntervalToDB(value)}
 						/>
 					</View>
 				</ScrollView>

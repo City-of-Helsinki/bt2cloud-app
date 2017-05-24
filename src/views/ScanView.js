@@ -9,8 +9,10 @@ import {
 	ActivityIndicator,
 	Dimensions,
 	AppState,
+	Platform,
 } from 'react-native';
 
+import BleManager from 'react-native-ble-manager';
 import { Actions } from 'react-native-router-flux';
 
 import realm from '../realm';
@@ -143,7 +145,23 @@ class ScanView extends Component {
 
 	handleScanPress() {
 		let { scanning } = this.props.ble;
-		scanning ? this.props.bleScanStop() : this.props.bleScanStart();
+		if (scanning) {
+			this.props.bleScanStop(); 
+		}
+		else {
+			if (Platform.OS === 'android') {
+				BleManager.enableBluetooth()
+					.then(()=> {
+						this.props.bleScanStart();						
+					})
+					.catch((err)=> {
+						console.log('User refused to enable Bluetooth');
+					});
+			}
+			else {
+				this.props.bleScanStart();
+			}
+		}
 		this.props.getConnectedPeripherals();
 	}
 

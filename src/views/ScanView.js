@@ -152,6 +152,7 @@ class ScanView extends Component {
 			if (Platform.OS === 'android') {
 				BleManager.enableBluetooth()
 					.then(()=> {
+						this.props.getAvailablePeripherals();
 						this.props.bleScanStart();						
 					})
 					.catch((err)=> {
@@ -159,6 +160,7 @@ class ScanView extends Component {
 					});
 			}
 			else {
+				this.props.getAvailablePeripherals();
 				this.props.bleScanStart();
 			}
 		}
@@ -171,8 +173,9 @@ class ScanView extends Component {
 	}
 
 	handleInfoPress(device) {
-
+		if (!device) return;
 		detailedDevice = this.props.ble.peripheralServiceData.filter(p=>p.id === device.id)[0];
+		if (!detailedDevice) return;
 		Actions.DeviceDetailView({title: device.name, device: detailedDevice});
 	}
 

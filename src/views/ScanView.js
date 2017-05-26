@@ -13,6 +13,7 @@ import {
 	Vibration,
 } from 'react-native';
 
+import Toast from '@remobile/react-native-toast';
 import BleManager from 'react-native-ble-manager';
 import { Actions } from 'react-native-router-flux';
 
@@ -91,17 +92,21 @@ class ScanView extends Component {
 		this.props.bleUpdateAvailablePeripherals(peripheral, null);
 	}
 
-	handleConnectPeripheral(data) {
+	handleConnectPeripheral(data) {		
 		this.props.getConnectedPeripherals();
+		let deviceName = data.peripheral;
+		Toast.showShortCenter('Connected to ' + deviceName);		
 		// this.props.getAvailablePeripherals();
 	}
 
 	handleDisconnectPeripheral(data) {
-		Vibration.vibrate();
 		if (!data) return;
 		if (!data.hasOwnProperty('peripheral')) return;
 		let deviceID = data.peripheral;
 		let { notifyingChars, peripheralServiceData } = this.props.ble;
+
+		Vibration.vibrate();
+		Toast.showShortCenter('Disconnected from ' + deviceID);
 
 		if (peripheralServiceData && peripheralServiceData.length > 0) {
 

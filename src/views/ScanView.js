@@ -10,6 +10,7 @@ import {
 	Dimensions,
 	AppState,
 	Platform,
+	Vibration,
 } from 'react-native';
 
 import BleManager from 'react-native-ble-manager';
@@ -96,6 +97,7 @@ class ScanView extends Component {
 	}
 
 	handleDisconnectPeripheral(data) {
+		Vibration.vibrate();
 		if (!data) return;
 		if (!data.hasOwnProperty('peripheral')) return;
 		let deviceID = data.peripheral;

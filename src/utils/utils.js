@@ -16,7 +16,6 @@ export default {
 		let array=[];
 
 		Object.keys(results).forEach((key)=> {
-			console.log('result: ', results[key]);
 			array.push(results[key]);
 		});
 
@@ -29,9 +28,7 @@ export default {
 		let filename = moment(jsonObject.time).format('YYYY-MM-DD-HH') + '_' + file_tag + '.txt';
 		let dirpath = fs.ExternalDirectoryPath + FILE_SAVE_PATH;
 		let filepath = dirpath + filename;
-		console.log(filepath);
 		let writeString = JSON.stringify(jsonObject) + '\r\n';
-		console.log(writeString);
 
 		fs.mkdir(dirpath);
 		fs.exists(filepath)

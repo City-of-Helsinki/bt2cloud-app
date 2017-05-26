@@ -24,9 +24,11 @@ import {
 	bleScanStop,
 	bleScanEnded, 
 	bleConnect, 
+	bleConnecting,
 	bleDisconnect,
 	getConnectedPeripherals,
 	getAvailablePeripherals,
+	bleUpdateAvailablePeripherals,
 	bleAppendReadHistory, 
 	bleNotifyStopped,
 	bleFavoriteAdd,
@@ -84,13 +86,13 @@ class ScanView extends Component {
 
 	// this gets called multiple times per device upon discovery
 	// cannot be prevented on android
-	handleDiscoverPeripheral(data) {
-		this.props.getAvailablePeripherals();
+	handleDiscoverPeripheral(peripheral) {
+		this.props.bleUpdateAvailablePeripherals(peripheral, null);
 	}
 
 	handleConnectPeripheral(data) {
 		this.props.getConnectedPeripherals();
-		this.props.getAvailablePeripherals();
+		// this.props.getAvailablePeripherals();
 	}
 
 	handleDisconnectPeripheral(data) {
@@ -104,17 +106,15 @@ class ScanView extends Component {
 			// TODO REMOVE ALL NOTIFYING CHARS FROM STATE ON DISCONNECT
 			let disconnectedDevicesChars = notifyingChars.filter(c=>c.deviceID === deviceID)
 				.map(ch=>ch.characteristic);
-			console.log('disc device chars:', disconnectedDevicesChars);
 			disconnectedDevicesChars.forEach(dc => this.props.bleNotifyStopped(dc));
 		}
 		
 		this.props.getConnectedPeripherals();
-		this.props.getAvailablePeripherals();
+		// this.props.getAvailablePeripherals();
 	}
 
 	handleNotification(data) {
 		if (!data) return;
-		console.log ('new notification! ', Utils.hexDecode(data.value));
 		let deviceID = data.peripheral;
 		let characteristic = data.characteristic
 		let service = data.service
@@ -140,6 +140,7 @@ class ScanView extends Component {
 	}
 
 	handleScanEnded() {
+		this.props.getAvailablePeripherals();
 		this.props.bleScanEnded();
 	}
 
@@ -152,7 +153,7 @@ class ScanView extends Component {
 			if (Platform.OS === 'android') {
 				BleManager.enableBluetooth()
 					.then(()=> {
-						this.props.getAvailablePeripherals();
+						// this.props.getAvailablePeripherals();
 						this.props.bleScanStart();						
 					})
 					.catch((err)=> {
@@ -160,7 +161,7 @@ class ScanView extends Component {
 					});
 			}
 			else {
-				this.props.getAvailablePeripherals();
+				// this.props.getAvailablePeripherals();
 				this.props.bleScanStart();
 			}
 		}
@@ -169,7 +170,13 @@ class ScanView extends Component {
 
 	handleConnectPress(device) {
 		let connected = this.props.ble.connectedPeripherals.map(p=>p.id).includes(device.id);
-		connected ? this.props.bleDisconnect(device) : this.props.bleConnect(device);
+		if (connected) {
+			this.props.bleDisconnect(device) 
+		}
+		else {
+			this.props.bleConnecting(device);
+			this.props.bleConnect(device);
+		}	
 	}
 
 	handleInfoPress(device) {
@@ -187,8 +194,7 @@ class ScanView extends Component {
 	render() {
 		let that = this;
 		let { started, startError, scanning, scanError, peripherals, connectedPeripherals,
-			knownPeripherals, connectError } = this.props.ble;
-		// console.log(this.props.ble);
+			connectingPeripherals, knownPeripherals, connectError } = this.props.ble;
 		let favoritePeripherals = knownPeripherals.filter(p=>p.favorite === true);
 
 		function scanText() {
@@ -205,22 +211,24 @@ class ScanView extends Component {
 			
 			allDevices = peripherals.concat(unavailableDevices).map((device)=> {
 				let connected = connectedPeripherals.map(p=>p.id).includes(device.id);
+				let connecting = connectingPeripherals.includes(device.id);
 				let favorite = favoritePeripherals.map(p=>p.id).includes(device.id);
 				let inRange = peripherals.map(p=>p.id).includes(device.id);
 				return (
 				<DeviceBox
-					connectPress={that.handleConnectPress.bind(that, device)} 
-					infoPress={that.handleInfoPress.bind(that, device)}
+					mainAreaPress={connected ? that.handleInfoPress.bind(that, device) : that.handleConnectPress.bind(that, device)} 
+					disconnectPress={that.handleConnectPress.bind(that, device)}
 					favPress={that.handleFavoritePress.bind(that, device, favorite)}
 					key={device.id} 
 					device={device}
 					favorite={favorite}
+					connecting={connecting}
 					connected={connected}
 					inRange={inRange}
 					style={[
 						deviceBox, 
 						{
-							backgroundColor: !inRange ? '#555' : connected ? 'navy' : 'white',
+							backgroundColor: !inRange ? '#555' : connected ? 'navy' : connecting ? '#BBF': 'white',
 						}]
 					}>
 				</DeviceBox>
@@ -252,8 +260,8 @@ class ScanView extends Component {
 					</View>
 				</ScrollView>
 				<View style={deviceAmount}>
-					<Text style={text}>Found {peripherals.length} devices</Text>
-					{peripherals.length > 0 && <Text style={textSmall}>tap to connect/disconnect</Text>}
+					<Text style={text}>In range: {peripherals.length}, connected to: {connectedPeripherals.length}</Text>
+					{peripherals.length > 0 && <Text style={textSmall}>Tap device to connect</Text>}
 				</View>
 				{started && 
 					<TouchableHighlight onPress={this.handleScanPress.bind(this)} style={button}>
@@ -304,12 +312,14 @@ styles = StyleSheet.create({
 		borderColor: 'navy',
 	},
 	text: {
-		fontSize: 24,
-		color: 'black',
-	},
-	textSmall: {
 		fontSize: 16,
 		color: 'black',
+		textAlign: 'center',
+	},
+	textSmall: {
+		fontSize: 12,
+		color: 'black',
+		textAlign: 'center',
 	},
 	scrollView: {
 		flex: 1,
@@ -317,10 +327,10 @@ styles = StyleSheet.create({
 		alignItems: 'center',
 	},
 	deviceAmount: {
-		width: 200, 
+		width: 260, 
 		alignItems: 'center', 
-		marginTop: 15,
-		marginBottom: 25,
+		marginTop: 5,
+		marginBottom: 5,
 	},
 	spinner: {
 		marginLeft: 10,
@@ -351,9 +361,12 @@ function mapDispatchToProps(dispatch) {
 		bleScanStop: () => dispatch(bleScanStop()),    
     bleScanEnded: () => dispatch(bleScanEnded()),
     bleConnect: (device) => dispatch(bleConnect(device)),
+    bleConnecting: (device) => dispatch(bleConnecting(device)),
     bleDisconnect: (device) => dispatch(bleDisconnect(device)),
     getAvailablePeripherals: () => dispatch(getAvailablePeripherals()),
     getConnectedPeripherals: () => dispatch(getConnectedPeripherals()),
+    bleUpdateAvailablePeripherals: (peripheral, peripherals) => 
+    	dispatch(bleUpdateAvailablePeripherals(peripheral, peripherals)),
     bleAppendReadHistory: (deviceID, service, characteristic, hex) => dispatch(
     	bleAppendReadHistory(deviceID, service, characteristic, hex)),
     bleNotifyStopped: (characteristic) => dispatch(bleNotifyStopped(characteristic)),

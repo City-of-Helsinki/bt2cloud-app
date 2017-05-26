@@ -2,6 +2,7 @@ import {
   BLE_START, 
   BLE_SCAN_START, 
   BLE_SCAN_ENDED, 
+  BLE_CONNECTING,
   BLE_CONNECT_ERROR,
   BLE_UPDATE_CONNECTED_PERIPHERALS,
   BLE_UPDATE_AVAILABLE_PERIPHERALS,
@@ -46,7 +47,6 @@ export function bleStart() {
         dispatch(bleStartResult());
       })
       .catch((err) => {
-        console.log('failure starting ble');
         dispatch(bleStartResult(err.message));
       });
   }
@@ -70,7 +70,6 @@ export function bleScanStart() {
         dispatch(bleScanStartResult());
       })
       .catch((err) => {
-        console.log('scan error');
         dispatch(bleScanStartResult(err.message));
       });
   }
@@ -98,20 +97,27 @@ export function bleScanEnded(autoRestartScan=true) {
 }
 
 // CONNECT/DISCONNECT ERROR
-export function bleConnectError(error) {
+export function bleConnectError(device, error) {
   return {
     type: BLE_CONNECT_ERROR,
+    device,
     error,
   }
 }
 
 // USER CONNECTS TO PERIPHERAL
+
+export function bleConnecting(device) {
+  return {
+    type: BLE_CONNECTING,
+    device,
+  }
+}
+
 export function bleConnect(device) {
   return (dispatch) => {
-    console.log('bleConnect', device.id)
     BleManager.connect(device.id)
       .then((data)=>{
-        console.log ('got data: ', data);
         let { id } = data;
         let name;
         try {
@@ -126,8 +132,7 @@ export function bleConnect(device) {
         dispatch(bleUpdateKnownPeripherals(data));
       })
       .catch((err) => {
-        console.log ('error connecting to peripheral', err);
-        dispatch(bleConnectError(err));
+        dispatch(bleConnectError(device, err));
       })
   }
 }
@@ -139,7 +144,6 @@ export function bleDisconnect(device) {
         dispatch(getConnectedPeripherals());
       })
       .catch((err) => {
-        console.log ('error disconnecting from peripheral', err);
         dispatch(bleConnectError(err));
       })
   }  
@@ -150,7 +154,7 @@ export function getAvailablePeripherals() {
   return (dispatch) => {
     BleManager.getDiscoveredPeripherals([])
       .then((peripherals) => {
-        dispatch(bleUpdateAvailablePeripherals(peripherals));
+        dispatch(bleUpdateAvailablePeripherals(null, peripherals));
       })
       .catch((err) => {
         console.log('error getting peripherals', err);
@@ -158,9 +162,10 @@ export function getAvailablePeripherals() {
   }
 }
 
-export function bleUpdateAvailablePeripherals(peripherals){
+export function bleUpdateAvailablePeripherals(peripheral, peripherals){
   return {
     type: BLE_UPDATE_AVAILABLE_PERIPHERALS,
+    peripheral,
     peripherals
   } 
 }
@@ -216,7 +221,6 @@ export function bleAppendReadHistory(deviceID, service, characteristic, data) {
 
 export function bleRead(deviceID, service, characteristic) {
   return (dispatch) => {
-    console.log('bleRead');
     if (!deviceID || !service || !characteristic) return;
     BleManager.read(deviceID, service, characteristic)
       .then((data)=> {
@@ -273,7 +277,6 @@ export function bleNotifyStopped(characteristic) {
 
 export function bleNotify(deviceID, service, characteristic) {
   return (dispatch) => {
-    console.log('bleNotify');
     if (!deviceID || !service || !characteristic) return;
     BleManager.startNotification(deviceID, service, characteristic)
       .then(()=> {
@@ -288,7 +291,6 @@ export function bleNotify(deviceID, service, characteristic) {
 
 export function bleNotifyStop(deviceID, service, characteristic) {
   return (dispatch) => {
-    console.log('bleNotifyStop');
     if (!deviceID || !service || !characteristic) return;
     BleManager.stopNotification(deviceID, service, characteristic)
       .then(()=> {

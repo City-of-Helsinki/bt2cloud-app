@@ -16,6 +16,7 @@ import { connect } from 'react-redux';
 import realm from '../realm';
 import { 
 	bleConnect, 
+	bleConnecting,
 	bleDisconnect,
 	bleRead,
 	bleNotify,
@@ -58,22 +59,28 @@ class DeviceDetailView extends Component {
 	handleConnectPress() {
 		let { device } = this.props;
 		let connected = this.props.ble.connectedPeripherals.map(p=>p.id).includes(device.id);
-		connected ? this.props.bleDisconnect(device) : this.props.bleConnect(device);
+		if (connected) {
+			this.props.bleDisconnect(device) 
+		}
+		else {
+			this.props.bleConnecting(device);
+			this.props.bleConnect(device);
+		}	
 	}
 
 	render() {
 		let { started, startError, scanning, scanError, peripherals, connectedPeripherals,
-			knownPeripherals, connectError, readHistory, notifyingChars } = this.props.ble;
+			knownPeripherals, connectError, readHistory, notifyingChars, connectingPeripherals } = this.props.ble;
 		let { device } = this.props;
 		let connected = connectedPeripherals.map(p=>p.id).includes(device.id);
-
+		let connecting = connectingPeripherals.includes(device.id);
 
 		return (
 			<View style={container}>
 				<ScrollView>
 					<View style={scrollView}>
 						<TouchableHighlight onPress={this.handleConnectPress} style={button}>
-							<Text style={buttonText}>{connected ? 'Disconnect' : 'Connect'}</Text>
+							<Text style={buttonText}>{connected ? 'Disconnect' : connecting ? 'Connecting...' : 'Connect'}</Text>
 						</TouchableHighlight>					
 						{device.services && device.services.map(s => {
 							let chars = device.characteristics.filter(c => c.service === s.uuid);
@@ -195,6 +202,7 @@ function mapStateToProps(state) {
 function mapDispatchToProps(dispatch) {
   return {
     bleConnect: (device) => dispatch(bleConnect(device)),
+    bleConnecting: (device) => dispatch(bleConnecting(device)),
     bleDisconnect: (device) => dispatch(bleDisconnect(device)),
     bleRead: (deviceID, service, characteristic) => 
     	dispatch(bleRead(deviceID, service, characteristic)),

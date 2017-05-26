@@ -4,6 +4,7 @@ import {
 	Text,
 	TouchableHighlight,
 	StyleSheet,
+	ActivityIndicator,
 } from 'react-native';
 
 import Icon from 'react-native-vector-icons/FontAwesome';
@@ -14,15 +15,15 @@ class DeviceBox extends Component {
 	}
 
 	render() {
-		let infoIcon = 'info';
+		let disconnectIcon = 'remove';
 		let starIcon = this.props.favorite ? 'star' : 'star-o';
 		let starColor = this.props.favorite ? 'gold' : 'gold';
 
-		let connectPress = this.props.inRange ? this.props.connectPress : () => console.log('not in range');
+		let mainAreaPress = this.props.inRange ? this.props.mainAreaPress : () => console.log('not in range');
 		return (
 			<View>
 			<TouchableHighlight 
-				onPress={connectPress} 
+				onPress={mainAreaPress} 
 				style={this.props.style}>
 				<View style={innerContainer}>
 					<TouchableHighlight onPress={this.props.favPress} style={iconContainer}>
@@ -37,9 +38,12 @@ class DeviceBox extends Component {
 					</Text>
 					</View>
 					{this.props.connected && 
-						<TouchableHighlight onPress={this.props.infoPress} style={iconContainer}>
-						<Icon name={infoIcon} size={30} color="#FFF" />
+						<TouchableHighlight onPress={this.props.disconnectPress} style={iconContainer}>
+						<Icon name={disconnectIcon} size={50} color="#FFF" style={{marginTop:-4}}/>
 						</TouchableHighlight>
+					}
+					{this.props.connecting && 
+						<ActivityIndicator size={40} color='navy' style={spinner} />
 					}
 				</View>
 			</TouchableHighlight>	
@@ -61,8 +65,8 @@ const styles = StyleSheet.create({
 		flex: 1,
 	},
 	iconContainer: {
-		width: 50,
-		height: 50,
+		width: 60,
+		height: 60,
 		alignItems: 'center',
 		justifyContent: 'center',
 		marginHorizontal: 10,
@@ -74,8 +78,11 @@ const styles = StyleSheet.create({
 	},
 	text:{
 		fontSize: 14,	
+	},
+	spinner: {
+		marginRight: 20,
 	}
 });
-const { text, innerContainer, contentContainer, iconContainer, deviceDetailsContainer } = styles;
+const { text, innerContainer, contentContainer, iconContainer, deviceDetailsContainer, spinner } = styles;
 
 

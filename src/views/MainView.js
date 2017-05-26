@@ -26,11 +26,9 @@ class MainView extends Component {
 	componentDidMount(){
     navigator.geolocation.getCurrentPosition((position) => {
       this.lastPosition = position.coords;
-      console.log(this.lastPosition);
     });
     this.watchID = navigator.geolocation.watchPosition((position) => {
       this.lastPosition = position.coords;
-      console.log(this.lastPosition);
     });
     
     this.setGPSTrigger(this.props.settings.GPSInterval);		
@@ -38,8 +36,6 @@ class MainView extends Component {
 
 	setGPSTrigger(interval) {
     this.GPSTrigger = BGTimer.setInterval(()=>{
-    	console.log('save gps triggered, interval is now: ', interval);
-    	console.log(this.lastPosition);
     	try {
     		let gps = {
     			lat: this.lastPosition.latitude,
@@ -61,7 +57,6 @@ class MainView extends Component {
 		
 		if (newProps.settings.GPSInterval !== this.props.settings.GPSInterval) {
 			if (this.GPSTrigger) BGTimer.clearInterval(this.GPSTrigger);
-			console.log ('setting new GPS interval to ' + newProps.settings.GPSInterval);
 			this.setGPSTrigger(newProps.settings.GPSInterval);
 		}
 	}

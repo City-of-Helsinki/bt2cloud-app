@@ -4,6 +4,7 @@ import {
   BLE_START, 
   BLE_SCAN_START, 
   BLE_SCAN_ENDED, 
+  BLE_CONNECTING,
   BLE_CONNECT_ERROR,
   BLE_UPDATE_CONNECTED_PERIPHERALS,
   BLE_UPDATE_AVAILABLE_PERIPHERALS,
@@ -23,6 +24,7 @@ const initialState = {
   scanning: false,
   scanError: null,
   peripherals: [], // available peripherals (scanned)
+  connectingPeripherals: [], // currently connecting to these peripherals
   connectedPeripherals: [], // currently connected peripherals
   knownPeripherals: Utils.convertRealmResultsToArray(realm.objects('Device')) || [], // in database
   peripheralServiceData: [], // service&charac info received on connect. ad hoc info; not persisted to database.
@@ -42,9 +44,12 @@ export default function bleReducer (state = initialState, action) {
       };
 
     case BLE_SCAN_START: 
+      // clear devices from state except those that are connected
+      peripherals = state.connectedPeripherals.slice();
       return {
         ...state,
         scanning: action.scanning,
+        peripherals, 
         scanError: action.error ? action.error : null
       };
 
@@ -55,14 +60,33 @@ export default function bleReducer (state = initialState, action) {
         startScanByDefault: action.startScanByDefault,
       }; 
 
+    case BLE_CONNECTING:
+      connectingPeripherals = state.connectingPeripherals;
+      if (!connectingPeripherals.includes(action.device.id)) connectingPeripherals.push(action.device.id);
+      return {
+        ...state,
+        connectError: null,
+        connectingPeripherals,
+      }
+
     case BLE_CONNECT_ERROR:
+      connectingPeripherals = state.connectingPeripherals.filter(p=> p !== action.device.id);
       return {
         ...state,
         connectError: action.error,
+        connectingPeripherals,
       }
 
     case BLE_UPDATE_AVAILABLE_PERIPHERALS:
-      peripherals = action.peripherals;
+      if (action.peripherals) { // if we got all available peripherals, just update state to equal that array
+        peripherals = action.peripherals;
+      }
+      if (action.peripheral) { // if we discovered 1 peripheral, append it instead of replacing the state array
+        peripherals = state.peripherals;
+        if (!peripherals.map(p=>p.id).includes(action.peripheral.id)) {
+          peripherals.push(action.peripheral);
+        }
+      }
       return {
         ...state,
         peripherals,
@@ -70,9 +94,16 @@ export default function bleReducer (state = initialState, action) {
 
     case BLE_UPDATE_CONNECTED_PERIPHERALS:
       connectedPeripherals = action.peripherals;
+      connectingPeripherals = state.connectingPeripherals;
+
+      connectingPeripherals = connectingPeripherals.filter(p => {
+        return !connectedPeripherals.map(p2=>p2.id).includes(p);
+      });
+
       return {
         ...state,
         connectedPeripherals,
+        connectingPeripherals,
       }; 
 
     case BLE_UPDATE_KNOWN_PERIPHERALS:

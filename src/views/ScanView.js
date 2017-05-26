@@ -95,7 +95,9 @@ class ScanView extends Component {
 	handleConnectPeripheral(data) {		
 		this.props.getConnectedPeripherals();
 		let deviceName = data.peripheral;
-		Toast.showShortCenter('Connected to ' + deviceName);		
+		if (AppState.currentState === 'active') {
+			Toast.showShortCenter('Connected to ' + deviceName);		
+		}
 		// this.props.getAvailablePeripherals();
 	}
 
@@ -105,8 +107,13 @@ class ScanView extends Component {
 		let deviceID = data.peripheral;
 		let { notifyingChars, peripheralServiceData } = this.props.ble;
 
-		Vibration.vibrate();
-		Toast.showShortCenter('Disconnected from ' + deviceID);
+		if (AppState.currentState === 'active') {
+			Toast.showShortCenter('Disconnected from ' + deviceID);
+		}
+		else {
+			Vibration.vibrate();
+		}
+		
 
 		if (peripheralServiceData && peripheralServiceData.length > 0) {
 

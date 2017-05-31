@@ -298,7 +298,13 @@ export function bleNotifyStop(BleManager, deviceID, service, characteristic) {
 export function bleFavoriteAdd(realm, device) {
   return (dispatch)=> {
     realm.write(()=>{
-      realm.create('Device', {id: device.id, name: device.name, favorite: true}, true);
+      realm.create('Device', {
+        id: device.id, 
+        name: device.name, 
+        favorite: true,
+        autoConnect: true,
+        autoNotify: true,
+      }, true);
     });
     dispatch(bleUpdateKnownPeripherals());
   }
@@ -307,7 +313,13 @@ export function bleFavoriteAdd(realm, device) {
 export function bleFavoriteRemove(realm, device) {
   return (dispatch)=> {
     realm.write(()=>{
-      realm.create('Device', {id: device.id, name: device.name, favorite: false}, true);
+      realm.create('Device', {
+        id: device.id, 
+        name: device.name, 
+        favorite: false,
+        autoConnect: false,
+        autoNotify: false,
+      }, true);
     });
     dispatch(bleUpdateKnownPeripherals());
   }

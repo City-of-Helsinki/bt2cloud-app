@@ -53,6 +53,7 @@ class ScanView extends Component {
 		this.handleConnectPeripheral = this.handleConnectPeripheral.bind(this);
 		this.handleDisconnectPeripheral = this.handleDisconnectPeripheral.bind(this);
 		this.handleNotification = this.handleNotification.bind(this);
+		this.handleAutoConnect = this.handleAutoConnect.bind(this);
 		this.scanEndedListener = NativeAppEventEmitter
 			.addListener('BleManagerStopScan', this.handleScanEnded);
 		this.discoverPeripheralListener = NativeAppEventEmitter
@@ -78,12 +79,15 @@ class ScanView extends Component {
 	}
 
 	componentDidUpdate() {
+		// handle auto connect whenever applicable
+		this.handleAutoConnect();
+		
 		// if service started and startScanByDefault is true, start scan immediately
 		if (this.props.ble.started && !this.props.ble.scanning
 			&& this.props.ble.startScanByDefault) {
 			this.props.bleScanStart(BleManager);
 			this.props.getConnectedPeripherals(BleManager);
-		}
+		}		
 	}
 
 	// this gets called multiple times per device upon discovery
@@ -202,7 +206,32 @@ class ScanView extends Component {
 
 	handleFavoritePress(device, favorite) {
 		if (!device) return;
-		favorite ? this.props.bleFavoriteRemove(realm, device) : this.props.bleFavoriteAdd(realm, device);
+		if(favorite) {
+			this.props.bleFavoriteRemove(realm, device);
+			Toast.showLongBottom('Removed favorite. Auto-connect and auto-subscribe are now OFF.');
+		}
+		else {
+			this.props.bleFavoriteAdd(realm, device);
+			Toast.showLongBottom('Added favorite. Auto-connect and auto-subscribe are now ON.');
+		} 
+	}
+
+	handleAutoConnect() {
+		// If device is set to autoConnect in DB, try to connect (unless already connected/connecting)
+		let { peripherals, connectedPeripherals, connectingPeripherals, knownPeripherals} = this.props.ble;
+		let autoConnectPeripherals = knownPeripherals.filter(p=>p.autoConnect === true);
+
+		autoConnectPeripherals.forEach((per) => {
+			let inRange = peripherals.map(p=>p.id).includes(per.id);
+			let connected = connectedPeripherals.map(p=>p.id).includes(per.id);
+			let connecting = connectingPeripherals.includes(per.id);
+
+			if (inRange && !connected && !connecting) {
+				console.log('attempting to autoconnect');
+				this.props.bleConnecting(per);
+				this.props.bleConnect(BleManager, realm, per);
+			}
+		});
 	}
 
 	render() {
@@ -219,8 +248,8 @@ class ScanView extends Component {
 		function renderFoundDevices() {
 			let unavailableDevices = knownPeripherals.filter(p=>{
 				let availableIDs = peripherals.map(p2=>p2.id);
-
-				return !availableIDs.includes(p.id);
+				let connectedIDs = connectedPeripherals.map(p3=>p3.id);
+				return !availableIDs.includes(p.id) && !connectedIDs.includes(p.id);
 			});
 			
 			allDevices = peripherals.concat(unavailableDevices).map((device)=> {

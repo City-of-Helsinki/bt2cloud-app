@@ -13,7 +13,8 @@ import SettingsView from './SettingsView';
 import Utils from '../utils/utils';
 
 import {
-	FILE_TAG_GPS
+	FILE_TAG_GPS,
+	GPS_OPTIONS,
 } from '../constants';
 
 class MainView extends Component {
@@ -24,12 +25,13 @@ class MainView extends Component {
 	}
 
 	componentDidMount(){
-    navigator.geolocation.getCurrentPosition((position) => {
-      this.lastPosition = position.coords;
-    });
     this.watchID = navigator.geolocation.watchPosition((position) => {
+    	console.log('successfully got watched location', position);
       this.lastPosition = position.coords;
-    });
+    },
+    (error) => {
+    	console.log(error)
+    }, GPS_OPTIONS);
     
     this.setGPSTrigger(this.props.settings.GPSInterval);		
 	}
@@ -37,18 +39,20 @@ class MainView extends Component {
 	setGPSTrigger(interval) {
     this.GPSTrigger = BGTimer.setInterval(()=>{
     	try {
-    		let gps = {
-    			lat: this.lastPosition.latitude,
-    			lon: this.lastPosition.longitude,
-    			acc: this.lastPosition.accuracy.toFixed(3),
-    			alt: this.lastPosition.altitude,
-    			time: new Date(),
+    		if (this.lastPosition.latitude) {
+	    		let gps = {
+	    			lat: this.lastPosition.latitude,
+	    			lon: this.lastPosition.longitude,
+	    			acc: this.lastPosition.accuracy.toFixed(3),
+	    			alt: this.lastPosition.altitude,
+	    			time: new Date(),
+	    		}
+	    		Utils.writeToFile(gps, FILE_TAG_GPS);
     		}
-    		Utils.writeToFile(gps, FILE_TAG_GPS);
     	}
     	catch(err) {
     		console.log('error writing GPS to file', err);
-    	}
+    	}	      
     }, interval * 1000);		
 	}
 

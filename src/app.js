@@ -7,6 +7,7 @@ import { connect } from 'react-redux';
 import MainView from './views/MainView';
 import DeviceDetailView from './views/DeviceDetailView';
 import SplashScreen from './views/SplashScreen';
+import DeviceInfo from 'react-native-device-info';
 
 import { getDeviceInfo } from './actions/actions';
 
@@ -17,7 +18,7 @@ class App extends Component {
 	}
 
 	componentDidMount() {
-		this.props.getDeviceInfo();
+		this.props.getDeviceInfo(DeviceInfo);
 	}
 
 	render() {
@@ -70,7 +71,7 @@ function mapStateToProps(state) {
 
 function mapDispatchToProps(dispatch) {
   return {
-    getDeviceInfo: () => dispatch(getDeviceInfo()),
+    getDeviceInfo: (DeviceInfo) => dispatch(getDeviceInfo(DeviceInfo)),
   };
 }
 

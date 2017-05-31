@@ -12,7 +12,9 @@ import {
 	AppState,
 } from 'react-native';
 
+import BleManager from 'react-native-ble-manager';
 import { connect } from 'react-redux';
+
 import realm from '../realm';
 import { 
 	bleConnect, 
@@ -44,7 +46,7 @@ class DeviceDetailView extends Component {
 		let { device } = this.props;
 		let connected = this.props.ble.connectedPeripherals.map(p=>p.id).includes(device.id);
 		if (!connected) return;
-		this.props.bleRead(device.id, service, characteristic);
+		this.props.bleRead(BleManager, realm, Utils, device.id, service, characteristic);
 	}
 
 	handleNotifyPress(service, characteristic) {
@@ -53,18 +55,19 @@ class DeviceDetailView extends Component {
 		if (!connected) return;
 
 		let notifying = this.props.ble.notifyingChars.map(c=>c.characteristic).includes(characteristic);
-		notifying ? this.props.bleNotifyStop(device.id, service, characteristic) : this.props.bleNotify(device.id, service, characteristic)
+		notifying ? this.props.bleNotifyStop(BleManager, device.id, service, characteristic) 
+			: this.props.bleNotify(BleManager, device.id, service, characteristic);
 	}
 
 	handleConnectPress() {
 		let { device } = this.props;
 		let connected = this.props.ble.connectedPeripherals.map(p=>p.id).includes(device.id);
 		if (connected) {
-			this.props.bleDisconnect(device) 
+			this.props.bleDisconnect(BleManager, device) 
 		}
 		else {
 			this.props.bleConnecting(device);
-			this.props.bleConnect(device);
+			this.props.bleConnect(BleManager, realm, device);
 		}	
 	}
 
@@ -201,14 +204,14 @@ function mapStateToProps(state) {
 
 function mapDispatchToProps(dispatch) {
   return {
-    bleConnect: (device) => dispatch(bleConnect(device)),
+    bleConnect: (BleManager, realm, device) => dispatch(bleConnect(BleManager, realm, device)),
     bleConnecting: (device) => dispatch(bleConnecting(device)),
-    bleDisconnect: (device) => dispatch(bleDisconnect(device)),
-    bleRead: (deviceID, service, characteristic) => 
-    	dispatch(bleRead(deviceID, service, characteristic)),
-    bleNotify: (deviceID, service, characteristic) => 
-    	dispatch(bleNotify(deviceID, service, characteristic)),
-    bleNotifyStop: (deviceID, service, characteristic) => 
+    bleDisconnect: (BleManager, device) => dispatch(bleDisconnect(BleManager, device)),
+    bleRead: (BleManager, realm, Utils, deviceID, service, characteristic) => 
+    	dispatch(bleRead(BleManager, realm, Utils, deviceID, service, characteristic)),
+    bleNotify: (BleManager, deviceID, service, characteristic) => 
+    	dispatch(bleNotify(BleManager, deviceID, service, characteristic)),
+    bleNotifyStop: (BleManager, deviceID, service, characteristic) => 
     	dispatch(bleNotifyStop(deviceID, service, characteristic)),
   };
 }

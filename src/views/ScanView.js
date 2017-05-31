@@ -66,7 +66,7 @@ class ScanView extends Component {
 	}
 
 	componentDidMount() {
-		this.props.bleStart();
+		this.props.bleStart(BleManager);
 	}
 
 	componentWillUnmount() {
@@ -81,8 +81,8 @@ class ScanView extends Component {
 		// if service started and startScanByDefault is true, start scan immediately
 		if (this.props.ble.started && !this.props.ble.scanning
 			&& this.props.ble.startScanByDefault) {
-			this.props.bleScanStart();
-			this.props.getConnectedPeripherals();
+			this.props.bleScanStart(BleManager);
+			this.props.getConnectedPeripherals(BleManager);
 		}
 	}
 
@@ -93,7 +93,7 @@ class ScanView extends Component {
 	}
 
 	handleConnectPeripheral(data) {		
-		this.props.getConnectedPeripherals();
+		this.props.getConnectedPeripherals(BleManager);
 		let deviceName = data.peripheral;
 		if (AppState.currentState === 'active') {
 			Toast.showShortCenter('Connected to ' + deviceName);		
@@ -123,7 +123,7 @@ class ScanView extends Component {
 			disconnectedDevicesChars.forEach(dc => this.props.bleNotifyStopped(dc));
 		}
 		
-		this.props.getConnectedPeripherals();
+		this.props.getConnectedPeripherals(BleManager);
 		// this.props.getAvailablePeripherals();
 	}
 
@@ -154,21 +154,21 @@ class ScanView extends Component {
 	}
 
 	handleScanEnded() {
-		this.props.getAvailablePeripherals();
+		this.props.getAvailablePeripherals(BleManager);
 		this.props.bleScanEnded();
 	}
 
 	handleScanPress() {
 		let { scanning } = this.props.ble;
 		if (scanning) {
-			this.props.bleScanStop(); 
+			this.props.bleScanStop(BleManager); 
 		}
 		else {
 			if (Platform.OS === 'android') {
 				BleManager.enableBluetooth()
 					.then(()=> {
 						// this.props.getAvailablePeripherals();
-						this.props.bleScanStart();						
+						this.props.bleScanStart(BleManager);						
 					})
 					.catch((err)=> {
 						console.log('User refused to enable Bluetooth');
@@ -176,20 +176,20 @@ class ScanView extends Component {
 			}
 			else {
 				// this.props.getAvailablePeripherals();
-				this.props.bleScanStart();
+				this.props.bleScanStart(BleManager);
 			}
 		}
-		this.props.getConnectedPeripherals();
+		this.props.getConnectedPeripherals(BleManager);
 	}
 
 	handleConnectPress(device) {
 		let connected = this.props.ble.connectedPeripherals.map(p=>p.id).includes(device.id);
 		if (connected) {
-			this.props.bleDisconnect(device) 
+			this.props.bleDisconnect(BleManager, device) 
 		}
 		else {
 			this.props.bleConnecting(device);
-			this.props.bleConnect(device);
+			this.props.bleConnect(BleManager, realm, device);
 		}	
 	}
 
@@ -202,7 +202,7 @@ class ScanView extends Component {
 
 	handleFavoritePress(device, favorite) {
 		if (!device) return;
-		favorite ? this.props.bleFavoriteRemove(device) : this.props.bleFavoriteAdd(device);
+		favorite ? this.props.bleFavoriteRemove(realm, device) : this.props.bleFavoriteAdd(realm, device);
 	}
 
 	render() {
@@ -370,22 +370,22 @@ function mapStateToProps(state) {
 
 function mapDispatchToProps(dispatch) {
   return {
-    bleStart: () => dispatch(bleStart()),
-    bleScanStart: () => dispatch(bleScanStart()),
-		bleScanStop: () => dispatch(bleScanStop()),    
+    bleStart: (BleManager) => dispatch(bleStart(BleManager)),
+    bleScanStart: (BleManager) => dispatch(bleScanStart(BleManager)),
+		bleScanStop: (BleManager) => dispatch(bleScanStop(BleManager)),    
     bleScanEnded: () => dispatch(bleScanEnded()),
-    bleConnect: (device) => dispatch(bleConnect(device)),
+    bleConnect: (BleManager, realm, device) => dispatch(bleConnect(BleManager, realm, device)),
     bleConnecting: (device) => dispatch(bleConnecting(device)),
-    bleDisconnect: (device) => dispatch(bleDisconnect(device)),
-    getAvailablePeripherals: () => dispatch(getAvailablePeripherals()),
-    getConnectedPeripherals: () => dispatch(getConnectedPeripherals()),
+    bleDisconnect: (BleManager,device) => dispatch(bleDisconnect(BleManager,device)),
+    getAvailablePeripherals: (BleManager) => dispatch(getAvailablePeripherals(BleManager)),
+    getConnectedPeripherals: (BleManager) => dispatch(getConnectedPeripherals(BleManager)),
     bleUpdateAvailablePeripherals: (peripheral, peripherals) => 
     	dispatch(bleUpdateAvailablePeripherals(peripheral, peripherals)),
     bleAppendReadHistory: (deviceID, service, characteristic, hex) => dispatch(
     	bleAppendReadHistory(deviceID, service, characteristic, hex)),
     bleNotifyStopped: (characteristic) => dispatch(bleNotifyStopped(characteristic)),
-    bleFavoriteAdd: (device, favorite) => dispatch(bleFavoriteAdd(device, favorite)),
-    bleFavoriteRemove: (device, favorite) => dispatch(bleFavoriteRemove(device, favorite)),
+    bleFavoriteAdd: (realm, device) => dispatch(bleFavoriteAdd(realm, device)),
+    bleFavoriteRemove: (realm, device) => dispatch(bleFavoriteRemove(realm, device)),
   };
 }
 

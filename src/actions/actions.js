@@ -23,13 +23,6 @@ import {
   FILE_TAG_DATA,
 } from '../constants';
 
-import BleManager from 'react-native-ble-manager';
-import DeviceInfo from 'react-native-device-info';
-
-import realm from '../realm';
-import Utils from '../utils/utils';
-
-
 // START BLE MANAGER ACTIONS
 
 export function bleStartResult(error) {
@@ -40,7 +33,7 @@ export function bleStartResult(error) {
   }
 }
 
-export function bleStart() {
+export function bleStart(BleManager) {
   return (dispatch) => {
     BleManager.start({showAlert: false})
       .then(()=> {
@@ -63,7 +56,7 @@ export function bleScanStartResult(error) {
   }
 }
 
-export function bleScanStart() {
+export function bleScanStart(BleManager) {
   return (dispatch) => {
     BleManager.scan([], 60)
       .then(() => {
@@ -76,7 +69,7 @@ export function bleScanStart() {
 }
 
 // MANUAL END SCAN
-export function bleScanStop() {
+export function bleScanStop(BleManager) {
   return (dispatch) => {
     BleManager.stopScan()
       .then(() => {
@@ -114,7 +107,7 @@ export function bleConnecting(device) {
   }
 }
 
-export function bleConnect(device) {
+export function bleConnect(BleManager, realm, device) {
   return (dispatch) => {
     BleManager.connect(device.id)
       .then((data)=>{
@@ -137,7 +130,7 @@ export function bleConnect(device) {
   }
 }
 
-export function bleDisconnect(device) {
+export function bleDisconnect(BleManager, device) {
   return (dispatch) => {
     BleManager.disconnect(device.id)
       .then((data)=>{
@@ -150,7 +143,7 @@ export function bleDisconnect(device) {
 }
 
 // REFRESH AVAILABLE PERIPHERALS
-export function getAvailablePeripherals() {
+export function getAvailablePeripherals(BleManager) {
   return (dispatch) => {
     BleManager.getDiscoveredPeripherals([])
       .then((peripherals) => {
@@ -171,7 +164,7 @@ export function bleUpdateAvailablePeripherals(peripheral, peripherals){
 }
 
 // REFRESH CONNECTED PERIPHERALS
-export function getConnectedPeripherals() {
+export function getConnectedPeripherals(BleManager) {
   return (dispatch) => {
     BleManager.getConnectedPeripherals([])
       .then((peripherals) => {
@@ -219,7 +212,7 @@ export function bleAppendReadHistory(deviceID, service, characteristic, data) {
   }
 }
 
-export function bleRead(deviceID, service, characteristic) {
+export function bleRead(BleManager, realm, Utils, deviceID, service, characteristic) {
   return (dispatch) => {
     if (!deviceID || !service || !characteristic) return;
     BleManager.read(deviceID, service, characteristic)
@@ -275,7 +268,7 @@ export function bleNotifyStopped(characteristic) {
   }
 }
 
-export function bleNotify(deviceID, service, characteristic) {
+export function bleNotify(BleManager, deviceID, service, characteristic) {
   return (dispatch) => {
     if (!deviceID || !service || !characteristic) return;
     BleManager.startNotification(deviceID, service, characteristic)
@@ -289,7 +282,7 @@ export function bleNotify(deviceID, service, characteristic) {
   }
 }
 
-export function bleNotifyStop(deviceID, service, characteristic) {
+export function bleNotifyStop(BleManager, deviceID, service, characteristic) {
   return (dispatch) => {
     if (!deviceID || !service || !characteristic) return;
     BleManager.stopNotification(deviceID, service, characteristic)
@@ -302,7 +295,7 @@ export function bleNotifyStop(deviceID, service, characteristic) {
   }
 }
 
-export function bleFavoriteAdd(device) {
+export function bleFavoriteAdd(realm, device) {
   return (dispatch)=> {
     realm.write(()=>{
       realm.create('Device', {id: device.id, name: device.name, favorite: true}, true);
@@ -311,7 +304,7 @@ export function bleFavoriteAdd(device) {
   }
 }
 
-export function bleFavoriteRemove(device) {
+export function bleFavoriteRemove(realm, device) {
   return (dispatch)=> {
     realm.write(()=>{
       realm.create('Device', {id: device.id, name: device.name, favorite: false}, true);
@@ -347,7 +340,7 @@ export function settingsSetDeviceInfo(id, model, os) {
   }
 }
 
-export function getDeviceInfo() {
+export function getDeviceInfo(DeviceInfo) {
   return async (dispatch)=> {
     let id = await DeviceInfo.getUniqueID();
     let model = await DeviceInfo.getModel();

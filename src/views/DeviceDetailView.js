@@ -212,7 +212,7 @@ function mapDispatchToProps(dispatch) {
     bleNotify: (BleManager, deviceID, service, characteristic) => 
     	dispatch(bleNotify(BleManager, deviceID, service, characteristic)),
     bleNotifyStop: (BleManager, deviceID, service, characteristic) => 
-    	dispatch(bleNotifyStop(deviceID, service, characteristic)),
+    	dispatch(bleNotifyStop(BleManager, deviceID, service, characteristic)),
   };
 }
 

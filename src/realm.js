@@ -7,6 +7,8 @@ const DeviceSchema = {
 		name: {type: 'string', optional: true},
 		id: 'string',
 		favorite: {type: 'bool', default: false},
+		autoConnect: {type: 'bool', default: false},
+		autoNotify: {type: 'bool', default: false},
 	}
 };
 
@@ -34,6 +36,7 @@ const SettingsSchema = {
 
 let realm = new Realm({
 	schema: [DeviceSchema, DataSchema, SettingsSchema],
+	schemaVersion: 1,
 });
 
 realm.write(()=>{

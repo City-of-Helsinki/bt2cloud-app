@@ -12,6 +12,15 @@ export default {
 		return str;
 	},
 
+	byteToText: (byteArray) => {
+		let str='';
+		byteArray.forEach((byte)=> {
+			str += String.fromCharCode(byte);
+		});		
+
+		return str;
+	},
+
 	convertRealmResultsToArray: (results) => {
 		let array=[];
 

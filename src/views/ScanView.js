@@ -32,6 +32,7 @@ import {
 	getAvailablePeripherals,
 	bleUpdateAvailablePeripherals,
 	bleAppendReadHistory, 
+	bleNotify,
 	bleNotifyStopped,
 	bleFavoriteAdd,
 	bleFavoriteRemove,
@@ -69,7 +70,6 @@ class ScanView extends Component {
 
 	componentDidMount() {
 		this.props.bleStart(BleManager);
-		this.handleAutoConnect();
 	}
 
 	componentWillUnmount() {
@@ -139,8 +139,8 @@ class ScanView extends Component {
 		let deviceID = data.peripheral;
 		let characteristic = data.characteristic
 		let service = data.service
-		let hex = data.value;
-		let ascii = Utils.hexDecode(hex);
+		let hex = Array.isArray(data.value) ? '' : data.value;
+		let ascii = Array.isArray(data.value) ? Utils.byteToText(data.value) : Utils.hexDecode(data.value);
     let jsonObject = {
       deviceID,
       service,
@@ -245,7 +245,19 @@ class ScanView extends Component {
 		autoNotifyPeripherals.forEach((per) => {
 			let connected = connectedPeripherals.map(p=>p.id).includes(per.id);
 			if (connected) {
-				console.log(per.id);
+				BleManager.retrieveServices(per.id)
+					.then((data)=>{
+						if (!data.characteristics) return;
+						console.log(data);
+						let notifyableChars = data.characteristics.filter((c)=>{
+							return c.properties.hasOwnProperty('Notify') && c.properties.Notify === 'Notify';
+						});
+						console.log('notifyableChars: ', notifyableChars);
+						notifyableChars.forEach(nc=> {
+							let notifying = this.props.ble.notifyingChars.map(c=>c.characteristic).includes(nc.characteristic);
+							if (!notifying) this.props.bleNotify(BleManager, per.id, nc.service, nc.characteristic);
+						});
+				});
 			}
 		});
 	}
@@ -428,6 +440,8 @@ function mapDispatchToProps(dispatch) {
     	dispatch(bleUpdateAvailablePeripherals(peripheral, peripherals)),
     bleAppendReadHistory: (deviceID, service, characteristic, hex) => dispatch(
     	bleAppendReadHistory(deviceID, service, characteristic, hex)),
+    bleNotify: (BleManager, deviceID, service, characteristic) => 
+    	dispatch(bleNotify(BleManager, deviceID, service, characteristic)),    
     bleNotifyStopped: (characteristic) => dispatch(bleNotifyStopped(characteristic)),
     bleFavoriteAdd: (realm, device) => dispatch(bleFavoriteAdd(realm, device)),
     bleFavoriteRemove: (realm, device) => dispatch(bleFavoriteRemove(realm, device)),

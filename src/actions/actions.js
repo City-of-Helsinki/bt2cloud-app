@@ -110,19 +110,22 @@ export function bleConnecting(device) {
 export function bleConnect(BleManager, realm, device) {
   return (dispatch) => {
     BleManager.connect(device.id)
-      .then((data)=>{
-        let { id } = data;
-        let name;
-        try {
-          name = data.name;
-        }
-        catch(err) {
-          name = 'no name';
-        }
-        realm.write(()=>{
-          realm.create('Device', {id, name}, true);
-        });        
-        dispatch(bleUpdateKnownPeripherals(data));
+      .then(()=>{
+        BleManager.retrieveServices(device.id)
+          .then((data)=>{
+            let { id } = data;
+            let name;
+            try {
+              name = data.name;
+            }
+            catch(err) {
+              name = 'no name';
+            }
+            realm.write(()=>{
+              realm.create('Device', {id, name}, true);
+            });        
+            dispatch(bleUpdateKnownPeripherals(data));             
+        });
       })
       .catch((err) => {
         dispatch(bleConnectError(device, err));
@@ -217,13 +220,13 @@ export function bleRead(BleManager, realm, Utils, deviceID, service, characteris
     if (!deviceID || !service || !characteristic) return;
     BleManager.read(deviceID, service, characteristic)
       .then((data)=> {
-
+        console.log(data);
         let jsonObject = {
           deviceID,
           service,
           characteristic,
-          hex: data,
-          ascii: Utils.hexDecode(data),
+          hex: Array.isArray(data) ? '' : data,
+          ascii: Array.isArray(data) ? Utils.byteToText(data) : Utils.hexDecode(data),
           time: new Date(),
         };
 

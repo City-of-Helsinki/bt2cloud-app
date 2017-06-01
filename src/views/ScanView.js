@@ -54,6 +54,7 @@ class ScanView extends Component {
 		this.handleDisconnectPeripheral = this.handleDisconnectPeripheral.bind(this);
 		this.handleNotification = this.handleNotification.bind(this);
 		this.handleAutoConnect = this.handleAutoConnect.bind(this);
+		this.handleAutoNotify = this.handleAutoNotify.bind(this);
 		this.scanEndedListener = NativeAppEventEmitter
 			.addListener('BleManagerStopScan', this.handleScanEnded);
 		this.discoverPeripheralListener = NativeAppEventEmitter
@@ -68,6 +69,7 @@ class ScanView extends Component {
 
 	componentDidMount() {
 		this.props.bleStart(BleManager);
+		this.handleAutoConnect();
 	}
 
 	componentWillUnmount() {
@@ -81,6 +83,7 @@ class ScanView extends Component {
 	componentDidUpdate() {
 		// handle auto connect whenever applicable
 		this.handleAutoConnect();
+		this.handleAutoNotify();
 		
 		// if service started and startScanByDefault is true, start scan immediately
 		if (this.props.ble.started && !this.props.ble.scanning
@@ -230,6 +233,19 @@ class ScanView extends Component {
 				console.log('attempting to autoconnect');
 				this.props.bleConnecting(per);
 				this.props.bleConnect(BleManager, realm, per);
+			}
+		});
+	}
+
+	handleAutoNotify() {
+		// If device is set to autoNotify in DB, start notify on all notify-able chars
+		let { connectedPeripherals, knownPeripherals } = this.props.ble;
+		let autoNotifyPeripherals = knownPeripherals.filter(p=>p.autoNotify === true);
+
+		autoNotifyPeripherals.forEach((per) => {
+			let connected = connectedPeripherals.map(p=>p.id).includes(per.id);
+			if (connected) {
+				console.log(per.id);
 			}
 		});
 	}

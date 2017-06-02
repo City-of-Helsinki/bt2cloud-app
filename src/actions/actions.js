@@ -113,6 +113,7 @@ export function bleConnect(BleManager, realm, device) {
       .then(()=>{
         BleManager.retrieveServices(device.id)
           .then((data)=>{
+            console.log('retrieved services');
             let { id } = data;
             let name;
             try {
@@ -271,16 +272,18 @@ export function bleNotifyStopped(characteristic) {
   }
 }
 
-export function bleNotify(BleManager, deviceID, service, characteristic) {
+export function bleNotify(BleManager, deviceID, charArray) {
   return (dispatch) => {
-    if (!deviceID || !service || !characteristic) return;
-    BleManager.startNotification(deviceID, service, characteristic)
+    BleManager.startNotification(deviceID, charArray[0].service, charArray[0].characteristic)
       .then(()=> {
-        dispatch(bleNotifyStarted(deviceID, characteristic))
+        console.log('char array is now of length ' + charArray.length);
+        dispatch(bleNotifyStarted(deviceID, charArray[0].characteristic));
+        charArray.splice(0,1);
+        if (charArray.length > 0) bleNotify(charArray);
       })
       .catch((error)=>{
         console.log(error);
-        dispatch(bleNotifyError(deviceID, service, characteristic, error.message));
+        dispatch(bleNotifyError(deviceID, charArray[0].service, charArray[0].characteristic, error.message));
       });
   }
 }

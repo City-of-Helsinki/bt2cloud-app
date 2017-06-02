@@ -33,7 +33,10 @@ class ServiceBox extends Component {
 					</View>
 					<View style={contentContainer}>
 					<Text style={text}>
-						ID: {this.props.uuid}
+						SERVICE ID:
+					</Text>
+					<Text style={textSmall}>
+						{this.props.uuid}
 					</Text>
 					</View>
 						<TouchableHighlight onPress={this.infoPress} style={iconContainer}>
@@ -71,9 +74,13 @@ const styles = StyleSheet.create({
 	text:{
 		fontSize: 14,	
 		color: 'white',
-	}
+	},
+	textSmall:{
+		fontSize: 12,	
+		color: 'white',
+	}	
 });
-const { text, innerContainer, contentContainer, iconContainer, deviceDetailsContainer } = styles;
+const { text, textSmall, innerContainer, contentContainer, iconContainer, deviceDetailsContainer } = styles;
 
 export default ServiceBox;
 

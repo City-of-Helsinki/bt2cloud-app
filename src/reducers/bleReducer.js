@@ -35,6 +35,10 @@ const initialState = {
 };
 
 export default function bleReducer (state = initialState, action) {
+
+  let peripherals, connectingPeripherals, connectedPeripherals, knownPeripherals,
+    peripheralServiceData, readHistory, notifyingChars;
+
   switch (action.type) {
     case BLE_START: 
       return {
@@ -95,9 +99,10 @@ export default function bleReducer (state = initialState, action) {
     case BLE_UPDATE_CONNECTED_PERIPHERALS:
       connectedPeripherals = action.peripherals;
       connectingPeripherals = state.connectingPeripherals;
+      peripherals = state.peripherals;
 
       connectingPeripherals = connectingPeripherals.filter(p => {
-        return !connectedPeripherals.map(p2=>p2.id).includes(p);
+        return !connectedPeripherals.map(p2=>p2.id).includes(p) && peripherals.map(p3=>p3.id).includes(p);
       });
 
       return {
@@ -129,7 +134,7 @@ export default function bleReducer (state = initialState, action) {
       }
 
     case BLE_APPEND_READ_HISTORY:  
-      let readHistory = [];
+      readHistory = [];
     return {
       ...state,
       readHistory,

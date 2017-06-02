@@ -15,6 +15,7 @@ import {
 
 import Toast from '@remobile/react-native-toast';
 import BleManager from 'react-native-ble-manager';
+import BGTimer from 'react-native-background-timer';
 import { Actions } from 'react-native-router-flux';
 
 import realm from '../realm';
@@ -81,9 +82,8 @@ class ScanView extends Component {
 	}
 
 	componentDidUpdate() {
-		// handle auto connect whenever applicable
-		this.handleAutoConnect();
-		this.handleAutoNotify();
+    // handle auto connect and notify whenever applicable
+    this.handleAutoConnect();
 		
 		// if service started and startScanByDefault is true, start scan immediately
 		if (this.props.ble.started && !this.props.ble.scanning
@@ -101,11 +101,19 @@ class ScanView extends Component {
 
 	handleConnectPeripheral(data) {		
 		this.props.getConnectedPeripherals(BleManager);
-		let deviceName = data.peripheral;
+		let deviceID = data.peripheral;
 		if (AppState.currentState === 'active') {
-			Toast.showShortCenter('Connected to ' + deviceName);		
+			Toast.showShortCenter('Connected to ' + deviceID);		
 		}
-		// this.props.getAvailablePeripherals();
+
+    let hasAutoNotify = this.props.ble.knownPeripherals.filter(p=>p.autoNotify === true & p.id === deviceID);
+    if (hasAutoNotify.length !== 0) {
+      // Dirty hack. Prevents 2 concurrent retrieveServices native calls
+      // Concurrent calls cause promise to never resolve.
+      BGTimer.setTimeout(()=>{
+      	this.handleAutoNotify(deviceID);
+      }, 600);
+    }
 	}
 
 	handleDisconnectPeripheral(data) {
@@ -237,29 +245,34 @@ class ScanView extends Component {
 		});
 	}
 
-	handleAutoNotify() {
+	handleAutoNotify(deviceID) {
 		// If device is set to autoNotify in DB, start notify on all notify-able chars
-		let { connectedPeripherals, knownPeripherals } = this.props.ble;
-		let autoNotifyPeripherals = knownPeripherals.filter(p=>p.autoNotify === true);
-
-		autoNotifyPeripherals.forEach((per) => {
-			let connected = connectedPeripherals.map(p=>p.id).includes(per.id);
-			if (connected) {
-				BleManager.retrieveServices(per.id)
-					.then((data)=>{
-						if (!data.characteristics) return;
-						console.log(data);
-						let notifyableChars = data.characteristics.filter((c)=>{
-							return c.properties.hasOwnProperty('Notify') && c.properties.Notify === 'Notify';
-						});
-						console.log('notifyableChars: ', notifyableChars);
-						notifyableChars.forEach(nc=> {
-							let notifying = this.props.ble.notifyingChars.map(c=>c.characteristic).includes(nc.characteristic);
-							if (!notifying) this.props.bleNotify(BleManager, per.id, nc.service, nc.characteristic);
-						});
+    console.log('handleAutoNotify ' + deviceID);
+    try {
+		BleManager.retrieveServices(deviceID)
+			.then((data)=>{
+				console.log('handleautonotify promise resolves');
+				if (!data.characteristics) return;
+				let notifyableChars = data.characteristics.filter((c)=>{
+					return c.properties.hasOwnProperty('Notify') && c.properties.Notify === 'Notify';
 				});
-			}
-		});
+
+        // characteristics that are not notifying and their device is connected
+        let charArray = notifyableChars.filter((nc)=> {
+          let notifying = this.props.ble.notifyingChars.map(c=>c.characteristic).includes(nc.characteristic);
+          let connected = this.props.ble.connectedPeripherals.map(p=>p.id).includes(deviceID);
+          return !notifying && connected;
+        });
+        let sendCharArray = charArray.slice();
+        if (charArray.length > 0) this.props.bleNotify(BleManager, deviceID, sendCharArray); 
+		})
+    .catch((err) => {
+      console.log(err);
+    });
+  	}
+  	catch (err) {
+  		console.log('autonotify error: ', err);
+  	}
 	}
 
 	render() {
@@ -440,8 +453,8 @@ function mapDispatchToProps(dispatch) {
     	dispatch(bleUpdateAvailablePeripherals(peripheral, peripherals)),
     bleAppendReadHistory: (deviceID, service, characteristic, hex) => dispatch(
     	bleAppendReadHistory(deviceID, service, characteristic, hex)),
-    bleNotify: (BleManager, deviceID, service, characteristic) => 
-    	dispatch(bleNotify(BleManager, deviceID, service, characteristic)),    
+    bleNotify: (BleManager, deviceID, charArray) => 
+    	dispatch(bleNotify(BleManager, deviceID, charArray)),    
     bleNotifyStopped: (characteristic) => dispatch(bleNotifyStopped(characteristic)),
     bleFavoriteAdd: (realm, device) => dispatch(bleFavoriteAdd(realm, device)),
     bleFavoriteRemove: (realm, device) => dispatch(bleFavoriteRemove(realm, device)),

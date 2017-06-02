@@ -35,6 +35,7 @@ class DeviceDetailView extends Component {
 		super(props);
 		this.handleReadPress = this.handleReadPress.bind(this);
 		this.handleNotifyPress = this.handleNotifyPress.bind(this);
+		this.handleNotifyAllPress = this.handleNotifyAllPress.bind(this);
 		this.handleConnectPress = this.handleConnectPress.bind(this);
 	}
 
@@ -56,7 +57,7 @@ class DeviceDetailView extends Component {
 
 		let notifying = this.props.ble.notifyingChars.map(c=>c.characteristic).includes(characteristic);
 		notifying ? this.props.bleNotifyStop(BleManager, device.id, service, characteristic) 
-			: this.props.bleNotify(BleManager, device.id, service, characteristic);
+			: this.props.bleNotify(BleManager, device.id, [{service, characteristic}]);
 	}
 
 	handleConnectPress() {
@@ -71,20 +72,33 @@ class DeviceDetailView extends Component {
 		}	
 	}
 
+	handleNotifyAllPress() {
+		console.log('notify all');
+	}
+
 	render() {
 		let { started, startError, scanning, scanError, peripherals, connectedPeripherals,
 			knownPeripherals, connectError, readHistory, notifyingChars, connectingPeripherals } = this.props.ble;
 		let { device } = this.props;
 		let connected = connectedPeripherals.map(p=>p.id).includes(device.id);
 		let connecting = connectingPeripherals.includes(device.id);
+		let hasAutoNotify = this.props.ble.knownPeripherals.filter(p=>p.autoNotify === true & p.id === device.id);
 
+		let canStartNotifyAll = hasAutoNotify.length < 1; // autonotify is not on for this device
 		return (
 			<View style={container}>
 				<ScrollView>
 					<View style={scrollView}>
-						<TouchableHighlight onPress={this.handleConnectPress} style={button}>
-							<Text style={buttonText}>{connected ? 'Disconnect' : connecting ? 'Connecting...' : 'Connect'}</Text>
-						</TouchableHighlight>					
+						<View style={deviceActionButtons}>
+							<TouchableHighlight onPress={this.handleConnectPress} style={button}>
+								<Text style={buttonText}>{connected ? 'Disconnect' : connecting ? 'Connecting...' : 'Connect'}</Text>
+							</TouchableHighlight>
+							<TouchableHighlight 
+								onPress={canStartNotifyAll ? this.handleNotifyAllPress : () => {}} 
+								style={canStartNotifyAll ? button : disabledButton}>
+								<Text style={buttonText}>Start recording</Text>
+							</TouchableHighlight>					
+						</View>
 						{device.services && device.services.map(s => {
 							let chars = device.characteristics.filter(c => c.service === s.uuid);
 							return(
@@ -139,16 +153,31 @@ styles = StyleSheet.create({
 	},
 	button: {
 		marginTop: 20,
-		width: 150,
+		marginHorizontal: 5,
+		width: 120,
 		height: 40,
 		borderRadius: 5,
 		justifyContent: 'center',
 		alignItems: 'center',
 		backgroundColor: 'navy',
 	},
+	disabledButton: {
+		marginTop: 20,
+		marginHorizontal: 5,
+		width: 120,
+		height: 40,
+		borderRadius: 5,
+		justifyContent: 'center',
+		alignItems: 'center',
+		backgroundColor: '#CCC',
+	},	
 	buttonText: {
 		color: 'white',
-		fontSize: 20,
+		fontSize: 15,
+	},
+	deviceActionButtons: {
+		flexDirection: 'row',
+		justifyContent: 'space-between',
 	},
 	serviceBox: {
 		width: Dimensions.get('window').width - 20,
@@ -188,7 +217,9 @@ styles = StyleSheet.create({
 const { 
 	container, 
 	button,
+	disabledButton,
 	buttonText, 
+	deviceActionButtons,
 	text, 
 	textSmall, 
 	serviceBox,
@@ -209,8 +240,8 @@ function mapDispatchToProps(dispatch) {
     bleDisconnect: (BleManager, device) => dispatch(bleDisconnect(BleManager, device)),
     bleRead: (BleManager, realm, Utils, deviceID, service, characteristic) => 
     	dispatch(bleRead(BleManager, realm, Utils, deviceID, service, characteristic)),
-    bleNotify: (BleManager, deviceID, service, characteristic) => 
-    	dispatch(bleNotify(BleManager, deviceID, service, characteristic)),
+    bleNotify: (BleManager, deviceID, charArray) => 
+    	dispatch(bleNotify(BleManager, deviceID, charArray)),
     bleNotifyStop: (BleManager, deviceID, service, characteristic) => 
     	dispatch(bleNotifyStop(BleManager, deviceID, service, characteristic)),
   };

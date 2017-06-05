@@ -1,6 +1,7 @@
 import fs from 'react-native-fs';
 import moment from 'moment';
 import { zip } from 'react-native-zip-archive';
+import FetchBlob from 'react-native-fetch-blob';
 
 import { 
 	FILE_SENT_SAVE_PATH,
@@ -75,6 +76,20 @@ export default {
 			zip(sourcePath, targetPath)
 				.then((path) => {
 					resolve(path);
+				})
+				.catch((err) => {
+					reject(err);
+				});
+		});
+	},
+
+	httpRequest: (request) => {
+		return new Promise((resolve, reject) => {
+			let { type, url, headers, filepath } = request;
+			console.log(FetchBlob.wrap(filepath));
+			FetchBlob.fetch(type, url, headers, FetchBlob.wrap(filepath))
+				.then((res) => {
+					resolve(res.text());
 				})
 				.catch((err) => {
 					reject(err);

@@ -53,6 +53,21 @@ class SettingsView extends Component {
 		Utils.createZip()
 			.then((path)=> {
 				console.log('Successfully created zip at ' + path);
+				let request = {
+					type: 'POST',
+					url: this.props.settings.activeBackend.url,
+					headers: {
+						'Content-Type': 'application/octet-stream',
+					},
+					filepath: path,
+				};
+				Utils.httpRequest(request)
+					.then((res)=> {
+						console.log(res);
+					})
+					.catch((err)=> {
+						console.log('Error sending to backend: ' + err);
+					});
 			})
 			.catch((err)=> {
 				console.log('Error creating zip: ' + err.message);

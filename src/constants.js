@@ -33,7 +33,8 @@ export const SETTINGS_SET_DEVICE_INFO = 'SETTINGS_SET_DEVICE_INFO';
 
 // OTHER CONSTANTS
 
-export const FILE_SAVE_PATH = '/unsent/';
+export const FILE_UNSENT_SAVE_PATH = '/unsent/';
+export const FILE_SENT_SAVE_PATH = '/sent/';
 export const FILE_TAG_DATA = 'data_log';
 export const FILE_TAG_GPS = 'gps_log';
 export const GPS_OPTIONS = {

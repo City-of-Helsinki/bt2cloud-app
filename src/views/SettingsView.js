@@ -8,6 +8,7 @@ import {
 	ActivityIndicator,
 	Slider,
 	Dimensions,
+	Alert,
 } from 'react-native';
 
 import { connect } from 'react-redux';
@@ -26,6 +27,7 @@ class SettingsView extends Component {
 		super(props);
 		this.saveDiskIntervalToDB = this.saveDiskIntervalToDB.bind(this);
 		this.saveGPSIntervalToDB = this.saveGPSIntervalToDB.bind(this);
+		this.sendToBackend = this.sendToBackend.bind(this);
 	}
 
 	saveDiskIntervalToDB(value) {
@@ -47,8 +49,18 @@ class SettingsView extends Component {
 		});
 	}
 
+	sendToBackend() {
+		Utils.createZip()
+			.then((path)=> {
+				console.log('Successfully created zip at ' + path);
+			})
+			.catch((err)=> {
+				console.log('Error creating zip: ' + err.message);
+			});
+	}
+
 	render() {
-		let { deviceInfo, flushToDiskInterval, GPSInterval } = this.props.settings;
+		let { deviceInfo, flushToDiskInterval, GPSInterval, activeBackend } = this.props.settings;
 
 		return (
 			<View style={container}>
@@ -77,6 +89,10 @@ class SettingsView extends Component {
 							onValueChange={(value)=>this.props.settingsChangeGPSInterval(value)}
 							onSlidingComplete={(value)=>this.saveGPSIntervalToDB(value)}
 						/>
+
+						<TouchableHighlight style={button} onPress={this.sendToBackend}>
+							<Text style={buttonText}>Send to backend</Text>
+						</TouchableHighlight>
 					</View>
 				</ScrollView>
 			</View>
@@ -96,8 +112,8 @@ styles = StyleSheet.create({
 	},
 	button: {
 		marginTop: 20,
-		width: 110,
-		height: 40,
+		width: 150,
+		height: 50,
 		borderRadius: 5,
 		justifyContent: 'center',
 		alignItems: 'center',
@@ -105,17 +121,17 @@ styles = StyleSheet.create({
 		alignSelf: 'center',
 	},
 	buttonText: {
-		color: 'white',
-		fontSize: 20,
+		color: Colors.WHITE,
+		fontSize: 16,
 	},
 	text: {
 		fontSize: 18,
-		color: 'black',
+		color: Colors.BLACK,
 		textAlign: 'center',
-	},
+	},	
 	textSmall: {
 		fontSize: 16,
-		color: 'black',
+		color: Colors.BLACK,
 	},
 	scrollView: {
 		flex: 1,

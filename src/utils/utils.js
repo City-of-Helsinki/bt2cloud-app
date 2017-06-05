@@ -1,7 +1,11 @@
 import fs from 'react-native-fs';
 import moment from 'moment';
+import { zip } from 'react-native-zip-archive';
 
-import { FILE_SAVE_PATH } from '../constants';
+import { 
+	FILE_SENT_SAVE_PATH,
+	FILE_UNSENT_SAVE_PATH,
+} from '../constants';
 
 export default {
 	hexDecode: (hex) => {
@@ -35,7 +39,7 @@ export default {
 		if (!file_tag) file_tag ='file';
 		
 		let filename = moment(jsonObject.time).format('YYYY-MM-DD-HH') + '_' + file_tag + '.txt';
-		let dirpath = fs.ExternalDirectoryPath + FILE_SAVE_PATH;
+		let dirpath = fs.ExternalDirectoryPath + FILE_UNSENT_SAVE_PATH;
 		let filepath = dirpath + filename;
 		let writeString = JSON.stringify(jsonObject) + '\r\n';
 
@@ -61,5 +65,20 @@ export default {
 							});		
 				}
 			});
+	},
+
+	createZip: () => {
+		return new Promise((resolve, reject) => {
+			let filename = moment(new Date()).format('YYYY-MM-DD-HH_mm_ss') + '.zip';
+			let sourcePath = fs.ExternalDirectoryPath + FILE_UNSENT_SAVE_PATH;
+			let targetPath = fs.ExternalDirectoryPath + '/' + filename;
+			zip(sourcePath, targetPath)
+				.then((path) => {
+					resolve(path);
+				})
+				.catch((err) => {
+					reject(err);
+				});
+		});
 	}
 }

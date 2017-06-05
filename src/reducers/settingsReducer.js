@@ -5,6 +5,9 @@ import {
   SETTINGS_CHANGE_GPS_INTERVAL,
   SETTINGS_SET_DEVICE_INFO,
 } from '../constants';
+import {
+  TEST_BACKEND_URL,
+} from '../../localSettings';
 
 const initialState = {
   deviceInfo: {
@@ -15,6 +18,12 @@ const initialState = {
   flushToDiskInterval: Utils.convertRealmResultsToArray(realm.objects('Settings'))[0].flushToDiskInterval,
   GPSInterval: Utils.convertRealmResultsToArray(realm.objects('Settings'))[0].saveGPSInterval,
   initializing: true,
+  activeBackend: {
+    url: TEST_BACKEND_URL,
+    user: null,
+    pass: null,
+    api_key: null,
+  }
 };
 
 export default function settingsReducer (state = initialState, action) {

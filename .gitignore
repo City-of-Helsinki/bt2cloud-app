@@ -36,6 +36,7 @@ android/*.log
 node_modules/
 npm-debug.log
 yarn-error.log
+localSettings.js
 
 # BUCK
 buck-out/

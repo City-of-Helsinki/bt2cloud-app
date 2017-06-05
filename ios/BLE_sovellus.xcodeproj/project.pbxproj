@@ -54,6 +54,7 @@
 		DCA8FA4B63454BF2B57DA925 /* libRNDeviceInfo.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 2ACA4D770CB0421DB3282665 /* libRNDeviceInfo.a */; };
 		726392A801164BCB96EE245D /* libRNBackgroundTimer.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 7B19245A13894A7EA365A116 /* libRNBackgroundTimer.a */; };
 		389EA982EBC2489DACA0F9DB /* libRCTToast.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 6F9210135AB5445FBA40AA86 /* libRCTToast.a */; };
+		3C1267DEB7F04B2CB7A05E68 /* libRNZipArchive.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 1121ADE6F2F84ECC9C95D3D3 /* libRNZipArchive.a */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -299,6 +300,8 @@
 		7B19245A13894A7EA365A116 /* libRNBackgroundTimer.a */ = {isa = PBXFileReference; name = "libRNBackgroundTimer.a"; path = "libRNBackgroundTimer.a"; sourceTree = "<group>"; fileEncoding = undefined; lastKnownFileType = archive.ar; explicitFileType = undefined; includeInIndex = 0; };
 		58C4385A09CC423DBEFFE77F /* RCTToast.xcodeproj */ = {isa = PBXFileReference; name = "RCTToast.xcodeproj"; path = "../node_modules/@remobile/react-native-toast/ios/RCTToast.xcodeproj"; sourceTree = "<group>"; fileEncoding = undefined; lastKnownFileType = wrapper.pb-project; explicitFileType = undefined; includeInIndex = 0; };
 		6F9210135AB5445FBA40AA86 /* libRCTToast.a */ = {isa = PBXFileReference; name = "libRCTToast.a"; path = "libRCTToast.a"; sourceTree = "<group>"; fileEncoding = undefined; lastKnownFileType = archive.ar; explicitFileType = undefined; includeInIndex = 0; };
+		C7370306E339418AA8FF9B34 /* RNZipArchive.xcodeproj */ = {isa = PBXFileReference; name = "RNZipArchive.xcodeproj"; path = "../node_modules/react-native-zip-archive/ios/RNZipArchive.xcodeproj"; sourceTree = "<group>"; fileEncoding = undefined; lastKnownFileType = wrapper.pb-project; explicitFileType = undefined; includeInIndex = 0; };
+		1121ADE6F2F84ECC9C95D3D3 /* libRNZipArchive.a */ = {isa = PBXFileReference; name = "libRNZipArchive.a"; path = "libRNZipArchive.a"; sourceTree = "<group>"; fileEncoding = undefined; lastKnownFileType = archive.ar; explicitFileType = undefined; includeInIndex = 0; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -334,6 +337,7 @@
 				DCA8FA4B63454BF2B57DA925 /* libRNDeviceInfo.a in Frameworks */,
 				726392A801164BCB96EE245D /* libRNBackgroundTimer.a in Frameworks */,
 				389EA982EBC2489DACA0F9DB /* libRCTToast.a in Frameworks */,
+				3C1267DEB7F04B2CB7A05E68 /* libRNZipArchive.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -507,6 +511,7 @@
 				60DB7975FBF4476F86779451 /* RNDeviceInfo.xcodeproj */,
 				DA44B6AB9B7F4B13B7D06F6F /* RNBackgroundTimer.xcodeproj */,
 				58C4385A09CC423DBEFFE77F /* RCTToast.xcodeproj */,
+				C7370306E339418AA8FF9B34 /* RNZipArchive.xcodeproj */,
 			);
 			name = Libraries;
 			sourceTree = "<group>";
@@ -1081,6 +1086,7 @@
 					"\"$(SRCROOT)/$(TARGET_NAME)\"",
 					"\"$(SRCROOT)/$(TARGET_NAME)\"",
 					"\"$(SRCROOT)/$(TARGET_NAME)\"",
+					"\"$(SRCROOT)/$(TARGET_NAME)\"",
 				);
 				HEADER_SEARCH_PATHS = (
 					"$(inherited)",
@@ -1091,6 +1097,7 @@
 					"$(SRCROOT)\..\node_modules\react-native-device-info\RNDeviceInfo",
 					"$(SRCROOT)\..\node_modules\react-native-background-timer\ios",
 					"$(SRCROOT)\..\node_modules\@remobile\react-native-toast\ios\RCTToast",
+					"$(SRCROOT)\..\node_modules\react-native-zip-archive\ios/**",
 				);
 			};
 			name = Debug;
@@ -1118,6 +1125,7 @@
 					"\"$(SRCROOT)/$(TARGET_NAME)\"",
 					"\"$(SRCROOT)/$(TARGET_NAME)\"",
 					"\"$(SRCROOT)/$(TARGET_NAME)\"",
+					"\"$(SRCROOT)/$(TARGET_NAME)\"",
 				);
 				HEADER_SEARCH_PATHS = (
 					"$(inherited)",
@@ -1128,6 +1136,7 @@
 					"$(SRCROOT)\..\node_modules\react-native-device-info\RNDeviceInfo",
 					"$(SRCROOT)\..\node_modules\react-native-background-timer\ios",
 					"$(SRCROOT)\..\node_modules\@remobile\react-native-toast\ios\RCTToast",
+					"$(SRCROOT)\..\node_modules\react-native-zip-archive\ios/**",
 				);
 			};
 			name = Release;
@@ -1156,6 +1165,7 @@
 					"$(SRCROOT)\..\node_modules\react-native-device-info\RNDeviceInfo",
 					"$(SRCROOT)\..\node_modules\react-native-background-timer\ios",
 					"$(SRCROOT)\..\node_modules\@remobile\react-native-toast\ios\RCTToast",
+					"$(SRCROOT)\..\node_modules\react-native-zip-archive\ios/**",
 				);
 			};
 			name = Debug;
@@ -1183,6 +1193,7 @@
 					"$(SRCROOT)\..\node_modules\react-native-device-info\RNDeviceInfo",
 					"$(SRCROOT)\..\node_modules\react-native-background-timer\ios",
 					"$(SRCROOT)\..\node_modules\@remobile\react-native-toast\ios\RCTToast",
+					"$(SRCROOT)\..\node_modules\react-native-zip-archive\ios/**",
 				);
 			};
 			name = Release;
@@ -1219,6 +1230,7 @@
 					"\"$(SRCROOT)/$(TARGET_NAME)\"",
 					"\"$(SRCROOT)/$(TARGET_NAME)\"",
 					"\"$(SRCROOT)/$(TARGET_NAME)\"",
+					"\"$(SRCROOT)/$(TARGET_NAME)\"",
 				);
 				HEADER_SEARCH_PATHS = (
 					"$(inherited)",
@@ -1229,6 +1241,7 @@
 					"$(SRCROOT)\..\node_modules\react-native-device-info\RNDeviceInfo",
 					"$(SRCROOT)\..\node_modules\react-native-background-timer\ios",
 					"$(SRCROOT)\..\node_modules\@remobile\react-native-toast\ios\RCTToast",
+					"$(SRCROOT)\..\node_modules\react-native-zip-archive\ios/**",
 				);
 			};
 			name = Debug;
@@ -1265,6 +1278,7 @@
 					"\"$(SRCROOT)/$(TARGET_NAME)\"",
 					"\"$(SRCROOT)/$(TARGET_NAME)\"",
 					"\"$(SRCROOT)/$(TARGET_NAME)\"",
+					"\"$(SRCROOT)/$(TARGET_NAME)\"",
 				);
 				HEADER_SEARCH_PATHS = (
 					"$(inherited)",
@@ -1275,6 +1289,7 @@
 					"$(SRCROOT)\..\node_modules\react-native-device-info\RNDeviceInfo",
 					"$(SRCROOT)\..\node_modules\react-native-background-timer\ios",
 					"$(SRCROOT)\..\node_modules\@remobile\react-native-toast\ios\RCTToast",
+					"$(SRCROOT)\..\node_modules\react-native-zip-archive\ios/**",
 				);
 			};
 			name = Release;
@@ -1306,6 +1321,7 @@
 					"\"$(SRCROOT)/$(TARGET_NAME)\"",
 					"\"$(SRCROOT)/$(TARGET_NAME)\"",
 					"\"$(SRCROOT)/$(TARGET_NAME)\"",
+					"\"$(SRCROOT)/$(TARGET_NAME)\"",
 				);
 			};
 			name = Debug;
@@ -1330,6 +1346,7 @@
 				TVOS_DEPLOYMENT_TARGET = 10.1;
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
+					"\"$(SRCROOT)/$(TARGET_NAME)\"",
 					"\"$(SRCROOT)/$(TARGET_NAME)\"",
 					"\"$(SRCROOT)/$(TARGET_NAME)\"",
 					"\"$(SRCROOT)/$(TARGET_NAME)\"",

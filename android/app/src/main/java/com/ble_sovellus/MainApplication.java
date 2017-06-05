@@ -3,6 +3,7 @@ package com.ble_sovellus;
 import android.app.Application;
 
 import com.facebook.react.ReactApplication;
+import com.rnziparchive.RNZipArchivePackage;
 import com.remobile.toast.RCTToastPackage;
 import com.ocetnik.timer.BackgroundTimerPackage;
 import com.learnium.RNDeviceInfo.RNDeviceInfo;
@@ -30,6 +31,7 @@ public class MainApplication extends Application implements ReactApplication {
     protected List<ReactPackage> getPackages() {
       return Arrays.<ReactPackage>asList(
           new MainReactPackage(),
+            new RNZipArchivePackage(),
             new RCTToastPackage(),
             new BackgroundTimerPackage(),
             new RNDeviceInfo(),

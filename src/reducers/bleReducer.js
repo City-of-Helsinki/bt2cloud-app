@@ -148,8 +148,9 @@ export default function bleReducer (state = initialState, action) {
 
     case BLE_NOTIFY_STARTED:
       notifyingChars = state.notifyingChars;
+      let { deviceID, charObject } = action;
       if (!notifyingChars.map(c=>c.characteristic).includes(action.characteristic)) {
-        notifyingChars.push({deviceID: action.deviceID, characteristic: action.characteristic});
+        notifyingChars.push({deviceID, service: charObject.service, characteristic: charObject.characteristic});
       }
 
       return {

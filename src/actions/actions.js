@@ -257,11 +257,11 @@ export function bleNotifyError(deviceID, service, characteristic, error) {
   }
 }
 
-export function bleNotifyStarted(deviceID, characteristic) {
+export function bleNotifyStarted(deviceID, charObject) {
   return {
     type: BLE_NOTIFY_STARTED,
     deviceID,
-    characteristic,
+    charObject,
   }
 }
 
@@ -277,7 +277,7 @@ export function bleNotify(BleManager, deviceID, charArray) {
     BleManager.startNotification(deviceID, charArray[0].service, charArray[0].characteristic)
       .then(()=> {
         console.log('char array is now of length ' + charArray.length);
-        dispatch(bleNotifyStarted(deviceID, charArray[0].characteristic));
+        dispatch(bleNotifyStarted(deviceID, charArray[0]));
         charArray.splice(0,1);
         if (charArray.length > 0) bleNotify(charArray);
       })
@@ -288,12 +288,13 @@ export function bleNotify(BleManager, deviceID, charArray) {
   }
 }
 
-export function bleNotifyStop(BleManager, deviceID, service, characteristic) {
+export function bleNotifyStop(BleManager, deviceID, charArray) {
   return (dispatch) => {
-    if (!deviceID || !service || !characteristic) return;
-    BleManager.stopNotification(deviceID, service, characteristic)
+    BleManager.stopNotification(deviceID, charArray[0].service, charArray[0].characteristic)
       .then(()=> {
-        dispatch(bleNotifyStopped(characteristic))
+        dispatch(bleNotifyStopped(charArray[0].characteristic))
+        charArray.splice(0,1);
+        if (charArray.length > 0) bleNotifyStop(charArray);        
       })
       .catch((error)=>{
         console.log(error);

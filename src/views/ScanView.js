@@ -13,6 +13,7 @@ import {
 	Vibration,
 } from 'react-native';
 
+import { Buffer } from 'buffer';
 import Toast from '@remobile/react-native-toast';
 import BleManager from 'react-native-ble-manager';
 import BGTimer from 'react-native-background-timer';
@@ -96,6 +97,9 @@ class ScanView extends Component {
 	// this gets called multiple times per device upon discovery
 	// cannot be prevented on android
 	handleDiscoverPeripheral(peripheral) {
+
+		// parse legible text from here
+		let base64Array = new Buffer(peripheral.advertising.data, 'base64').toString('ascii').split('');
 		this.props.bleUpdateAvailablePeripherals(peripheral, null);
 	}
 

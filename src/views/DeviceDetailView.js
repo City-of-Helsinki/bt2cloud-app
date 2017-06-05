@@ -56,7 +56,7 @@ class DeviceDetailView extends Component {
 		if (!connected) return;
 
 		let notifying = this.props.ble.notifyingChars.map(c=>c.characteristic).includes(characteristic);
-		notifying ? this.props.bleNotifyStop(BleManager, device.id, service, characteristic) 
+		notifying ? this.props.bleNotifyStop(BleManager, device.id, [{service, characteristic}]) 
 			: this.props.bleNotify(BleManager, device.id, [{service, characteristic}]);
 	}
 
@@ -64,7 +64,7 @@ class DeviceDetailView extends Component {
 		let { device } = this.props;
 		let connected = this.props.ble.connectedPeripherals.map(p=>p.id).includes(device.id);
 		if (connected) {
-			this.props.bleDisconnect(BleManager, device) 
+			this.props.bleDisconnect(BleManager, device); 
 		}
 		else {
 			this.props.bleConnecting(device);
@@ -72,19 +72,45 @@ class DeviceDetailView extends Component {
 		}	
 	}
 
-	handleNotifyAllPress() {
-		console.log('notify all');
+	handleNotifyAllPress(devicesNotifyingChars) {
+		let { device} = this.props; 
+		// All notifying chars, distinct from devicesNotifyingChars (current device only)
+		let { notifyingChars } = this.props.ble;
+		if (!device || !device.characteristics) return;
+
+		// This device's characteristics that have Notify property
+		let notifyableChars = device.characteristics.filter((c)=>{
+			return c.properties.hasOwnProperty('Notify') && c.properties.Notify === 'Notify';
+		});
+
+		// If 1 or more chars currently notifying, stop them all
+		if (notifyingChars.length > 0) {
+			this.props.bleNotifyStop(BleManager, device.id, devicesNotifyingChars);
+		}
+		// Otherwise start notify on all
+		else {
+			// characteristics that are not notifying and their device is connected
+	    let charArray = notifyableChars.filter((nc)=> {
+	      let notifying = notifyingChars.map(c=>c.characteristic).includes(nc.characteristic);
+	      let connected = this.props.ble.connectedPeripherals.map(p=>p.id).includes(device.id);
+	      return !notifying && connected;
+	    });
+    	if (charArray.length > 0) this.props.bleNotify(BleManager, device.id, charArray); 
+		}
 	}
 
 	render() {
 		let { started, startError, scanning, scanError, peripherals, connectedPeripherals,
 			knownPeripherals, connectError, readHistory, notifyingChars, connectingPeripherals } = this.props.ble;
 		let { device } = this.props;
+		// This device's characteristics that are currently notifying
+		device.notifyingChars = notifyingChars.filter(nc=>nc.deviceID === device.id);		
+
 		let connected = connectedPeripherals.map(p=>p.id).includes(device.id);
 		let connecting = connectingPeripherals.includes(device.id);
 		let hasAutoNotify = this.props.ble.knownPeripherals.filter(p=>p.autoNotify === true & p.id === device.id);
 
-		let canStartNotifyAll = hasAutoNotify.length < 1; // autonotify is not on for this device
+		let canStartNotifyAll = connected && hasAutoNotify.length < 1; // autonotify is not on for this device
 		return (
 			<View style={container}>
 				<ScrollView>
@@ -94,9 +120,11 @@ class DeviceDetailView extends Component {
 								<Text style={buttonText}>{connected ? 'Disconnect' : connecting ? 'Connecting...' : 'Connect'}</Text>
 							</TouchableHighlight>
 							<TouchableHighlight 
-								onPress={canStartNotifyAll ? this.handleNotifyAllPress : () => {}} 
+								onPress={canStartNotifyAll ? ()=>this.handleNotifyAllPress(device.notifyingChars) : () => {}} 
 								style={canStartNotifyAll ? button : disabledButton}>
-								<Text style={buttonText}>Start recording</Text>
+								<Text style={buttonText}>
+									{device.notifyingChars.length === 0 ? 'Start recording' : 'Stop recording'}
+								</Text>
 							</TouchableHighlight>					
 						</View>
 						{device.services && device.services.map(s => {
@@ -106,7 +134,7 @@ class DeviceDetailView extends Component {
 								key={s.uuid} 
 								uuid={s.uuid} 
 								connected={connected}
-								style={[serviceBox, {backgroundColor: connected ? 'navy' : '#444' }]}>
+								style={[serviceBox, {backgroundColor: connected ? 'navy' : '#CCC' }]}>
 								{chars.map(c=>{
 									let read = c.properties.hasOwnProperty('Read') && c.properties.Read === 'Read';
 									let notify = c.properties.hasOwnProperty('Notify') && c.properties.Notify === 'Notify';
@@ -242,8 +270,8 @@ function mapDispatchToProps(dispatch) {
     	dispatch(bleRead(BleManager, realm, Utils, deviceID, service, characteristic)),
     bleNotify: (BleManager, deviceID, charArray) => 
     	dispatch(bleNotify(BleManager, deviceID, charArray)),
-    bleNotifyStop: (BleManager, deviceID, service, characteristic) => 
-    	dispatch(bleNotifyStop(BleManager, deviceID, service, characteristic)),
+    bleNotifyStop: (BleManager, deviceID, charArray) => 
+    	dispatch(bleNotifyStop(BleManager, deviceID, charArray)),
   };
 }
 

@@ -12,6 +12,8 @@ import {
 	AppState,
 } from 'react-native';
 
+import Switch from 'react-native-switch-pro';
+
 import BleManager from 'react-native-ble-manager';
 import { connect } from 'react-redux';
 
@@ -23,9 +25,10 @@ import {
 	bleRead,
 	bleNotify,
 	bleNotifyStop,
+	bleModifyDevice,
 } from '../actions/actions';
 import Utils from '../utils/utils';
-
+import Colors from '../colors';
 import ServiceBox from '../components/ServiceBox';
 import CharBox from '../components/CharBox';
 
@@ -50,7 +53,8 @@ class DeviceDetailView extends Component {
 		this.props.bleRead(BleManager, realm, Utils, device.id, service, characteristic);
 	}
 
-	handleNotifyPress(service, characteristic) {
+	handleNotifyPress(service, characteristic, hasAutoNotify) {
+		if (hasAutoNotify) return;
 		let { device } = this.props;
 		let connected = this.props.ble.connectedPeripherals.map(p=>p.id).includes(device.id);
 		if (!connected) return;
@@ -99,34 +103,74 @@ class DeviceDetailView extends Component {
 		}
 	}
 
+	handleSwitch(realm, device, willBeFavorite, willHaveAutoConnect, willHaveAutoNotify) {
+		this.props.bleModifyDevice(realm, device, willBeFavorite, willHaveAutoConnect, willHaveAutoNotify);
+		if (willHaveAutoNotify) this.props.handleAutoNotify(device.id);
+	}
+
 	render() {
 		let { started, startError, scanning, scanError, peripherals, connectedPeripherals,
-			knownPeripherals, connectError, readHistory, notifyingChars, connectingPeripherals } = this.props.ble;
+			knownPeripherals, connectError, readHistory, notifyingChars, connectingPeripherals,
+			} = this.props.ble;
+		let favoritePeripherals = knownPeripherals.filter(p=>p.favorite === true);
 		let { device } = this.props;
 		// This device's characteristics that are currently notifying
 		device.notifyingChars = notifyingChars.filter(nc=>nc.deviceID === device.id);		
 
+		let favorite = favoritePeripherals.map(p=>p.id).includes(device.id);
 		let connected = connectedPeripherals.map(p=>p.id).includes(device.id);
 		let connecting = connectingPeripherals.includes(device.id);
-		let hasAutoNotify = this.props.ble.knownPeripherals.filter(p=>p.autoNotify === true & p.id === device.id);
+		let hasAutoNotify = this.props.ble.knownPeripherals.filter(
+			p=>p.autoNotify === true & p.id === device.id).length > 0;
+		let hasAutoConnect = this.props.ble.knownPeripherals.filter(
+			p=>p.autoConnect === true & p.id === device.id).length > 0;		
 
-		let canStartNotifyAll = connected && hasAutoNotify.length < 1; // autonotify is not on for this device
+		let canStartNotifyAll = connected && !hasAutoNotify; // autonotify is not on for this device
 		return (
 			<View style={container}>
 				<ScrollView>
 					<View style={scrollView}>
 						<View style={deviceActionButtons}>
-							<TouchableHighlight onPress={this.handleConnectPress} style={button}>
+							<TouchableHighlight 
+								onPress={this.handleConnectPress} 
+								style={connected ? offButton : button}>
 								<Text style={buttonText}>{connected ? 'Disconnect' : connecting ? 'Connecting...' : 'Connect'}</Text>
 							</TouchableHighlight>
+							<View style={switchContainer}>
+								<Text>Auto-Connect</Text>
+								<Switch 
+									height={40}
+									width={80}
+									value={hasAutoConnect}
+									backgroundActive={Colors.GREEN}
+									backgroundInactive={Colors.GRAY}
+									circleColor={Colors.WHITE}
+									onSyncPress={() => this.handleSwitch(realm, device, favorite, !hasAutoConnect, hasAutoNotify)}
+								/>
+							</View>
+						</View>
+						<View style={deviceActionButtons}>
 							<TouchableHighlight 
 								onPress={canStartNotifyAll ? ()=>this.handleNotifyAllPress(device.notifyingChars) : () => {}} 
-								style={canStartNotifyAll ? button : disabledButton}>
+								style={!canStartNotifyAll ? disabledButton 
+									: device.notifyingChars.length === 0 ? button : offButton }>
 								<Text style={buttonText}>
-									{device.notifyingChars.length === 0 ? 'Start recording' : 'Stop recording'}
+									{device.notifyingChars.length === 0 ? 'Start record' : 'Stop record'}
 								</Text>
-							</TouchableHighlight>					
-						</View>
+							</TouchableHighlight>	
+							<View style={switchContainer}>						
+								<Text>Auto-Record</Text>			
+								<Switch 
+									height={40}
+									width={80}							
+									value={hasAutoNotify}
+									backgroundActive={Colors.GREEN}
+									backgroundInactive={Colors.GRAY}
+									circleColor={Colors.WHITE}
+									onSyncPress={() => this.handleSwitch(realm, device, favorite, hasAutoConnect, !hasAutoNotify)}
+								/>
+							</View>
+						</View>						
 						{device.services && device.services.map(s => {
 							let chars = device.characteristics.filter(c => c.service === s.uuid);
 							return(
@@ -134,7 +178,7 @@ class DeviceDetailView extends Component {
 								key={s.uuid} 
 								uuid={s.uuid} 
 								connected={connected}
-								style={[serviceBox, {backgroundColor: connected ? 'navy' : '#CCC' }]}>
+								style={[serviceBox, {backgroundColor: connected ? Colors.BLUE : Colors.GREY }]}>
 								{chars.map(c=>{
 									let read = c.properties.hasOwnProperty('Read') && c.properties.Read === 'Read';
 									let notify = c.properties.hasOwnProperty('Notify') && c.properties.Notify === 'Notify';
@@ -150,6 +194,7 @@ class DeviceDetailView extends Component {
 											characteristic={c.characteristic}
 											read={read}
 											notify={notify}
+											hasAutoNotify={hasAutoNotify}
 											notifying={notifying}
 											newestValue={newestValue}
 											valueCount={valueCount}
@@ -180,32 +225,41 @@ styles = StyleSheet.create({
 		marginTop: 60,
 	},
 	button: {
-		marginTop: 20,
-		marginHorizontal: 5,
+		marginHorizontal: 25,
 		width: 120,
 		height: 40,
 		borderRadius: 5,
 		justifyContent: 'center',
 		alignItems: 'center',
-		backgroundColor: 'navy',
+		backgroundColor: Colors.GREEN,
 	},
+	offButton: {
+		marginHorizontal: 25,
+		width: 120,
+		height: 40,
+		borderRadius: 5,
+		justifyContent: 'center',
+		alignItems: 'center',		
+		backgroundColor: Colors.PURPLE,
+	},	
 	disabledButton: {
-		marginTop: 20,
-		marginHorizontal: 5,
+		marginHorizontal: 25,
 		width: 120,
 		height: 40,
 		borderRadius: 5,
 		justifyContent: 'center',
 		alignItems: 'center',
-		backgroundColor: '#CCC',
+		backgroundColor: Colors.GREY,
 	},	
 	buttonText: {
-		color: 'white',
+		color: Colors.WHITE,
 		fontSize: 15,
 	},
 	deviceActionButtons: {
 		flexDirection: 'row',
-		justifyContent: 'space-between',
+		justifyContent: 'center',
+		alignItems: 'flex-end',
+		marginTop: 8,
 	},
 	serviceBox: {
 		width: Dimensions.get('window').width - 20,
@@ -214,8 +268,8 @@ styles = StyleSheet.create({
 		justifyContent: 'center',
 		alignItems: 'center',
 		marginTop: 15,
-		borderColor: 'navy',
-		backgroundColor: 'navy',
+		borderColor: Colors.BLUE,
+		backgroundColor: Colors.BLUE,
 	},
 	charBox: {
 		width: Dimensions.get('window').width - 20,
@@ -224,27 +278,32 @@ styles = StyleSheet.create({
 		borderTopWidth: 0,
 		justifyContent: 'center',
 		alignItems: 'center',
-		borderColor: 'navy',
-		backgroundColor: 'white',
+		borderColor: Colors.BLUE,
+		backgroundColor: Colors.WHITE,
 	},
 	text: {
 		fontSize: 18,
-		color: 'black',
+		color: Colors.BLACK,
 	},
 	textSmall: {
 		fontSize: 16,
-		color: 'black',
+		color: Colors.BLACK,
 	},
 	scrollView: {
 		flex: 1,
 		justifyContent: 'flex-end',
 		alignItems: 'center',
 	},
+	switchContainer: {
+		width: 100,
+		alignItems: 'center',
+	}
 });
 
 const { 
 	container, 
 	button,
+	offButton,
 	disabledButton,
 	buttonText, 
 	deviceActionButtons,
@@ -253,6 +312,7 @@ const {
 	serviceBox,
 	charBox,
 	scrollView,
+	switchContainer,
 } = styles;
 
 function mapStateToProps(state) {
@@ -272,6 +332,8 @@ function mapDispatchToProps(dispatch) {
     	dispatch(bleNotify(BleManager, deviceID, charArray)),
     bleNotifyStop: (BleManager, deviceID, charArray) => 
     	dispatch(bleNotifyStop(BleManager, deviceID, charArray)),
+    bleModifyDevice: (realm, device, favorite, autoConnect, autoNotify) => 
+    	dispatch(bleModifyDevice(realm, device, favorite, autoConnect, autoNotify)),
   };
 }
 

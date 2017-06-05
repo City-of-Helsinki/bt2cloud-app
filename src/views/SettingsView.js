@@ -13,6 +13,7 @@ import {
 import { connect } from 'react-redux';
 import realm from '../realm';
 import Utils from '../utils/utils';
+import Colors from '../colors';
 
 import {
 	settingsChangeFlushToDisk,
@@ -100,7 +101,7 @@ styles = StyleSheet.create({
 		borderRadius: 5,
 		justifyContent: 'center',
 		alignItems: 'center',
-		backgroundColor: 'navy',
+		backgroundColor: Colors.BLUE,
 		alignSelf: 'center',
 	},
 	buttonText: {

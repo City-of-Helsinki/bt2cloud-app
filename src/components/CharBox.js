@@ -8,6 +8,7 @@ import {
 
 import moment from 'moment';
 import Icon from 'react-native-vector-icons/FontAwesome';
+import Colors from '../colors';
 
 const CharBox = (props) => {
 		return (
@@ -19,15 +20,17 @@ const CharBox = (props) => {
 					</Text>
 					</View>
 					{props.notify && 
-						<TouchableHighlight onPress={() => props.notifyPress(props.service, props.characteristic)} 
-							style={[iconContainer, {backgroundColor: props.connected ? 'navy' : '#444' }]}>
+						<TouchableHighlight onPress={
+							() => props.notifyPress(props.service, props.characteristic, props.hasAutoNotify)} 
+							style={[iconContainer, {backgroundColor: !props.connected || props.hasAutoNotify ? 
+								Colors.GREY : props.notifying ? Colors.PURPLE : Colors.GREEN }]}>
 						<Text style={buttonText}>{props.notifying ? 'Stop' : 'Notify'}</Text>
 						</TouchableHighlight>
 					}
 					{props.read && 
 					<TouchableHighlight 
 						onPress={() => props.readPress(props.service, props.characteristic)} 
-						style={[iconContainer, {backgroundColor: props.connected ? 'navy' : '#444' }]}>
+						style={[iconContainer, {backgroundColor: props.connected ? Colors.GREEN : Colors.GREY }]}>
 						<Text style={buttonText}>Read</Text>
 					</TouchableHighlight>
 					}

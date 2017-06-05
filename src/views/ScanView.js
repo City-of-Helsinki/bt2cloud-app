@@ -36,14 +36,14 @@ import {
 	bleAppendReadHistory, 
 	bleNotify,
 	bleNotifyStopped,
-	bleFavoriteAdd,
-	bleFavoriteRemove,
+	bleModifyDevice,
 } from '../actions/actions';
 
 import {
 	FILE_TAG_DATA
 } from '../constants';
 
+import Colors from '../colors';
 import Utils from '../utils/utils';
 import DeviceBox from '../components/DeviceBox';
 
@@ -84,7 +84,8 @@ class ScanView extends Component {
 
 	componentDidUpdate() {
     // handle auto connect and notify whenever applicable
-    this.handleAutoConnect();
+    let autoConnectPeripherals = this.props.ble.knownPeripherals.filter(p=>p.autoConnect === true);
+    this.handleAutoConnect(autoConnectPeripherals);
 		
 		// if service started and startScanByDefault is true, start scan immediately
 		if (this.props.ble.started && !this.props.ble.scanning
@@ -109,7 +110,7 @@ class ScanView extends Component {
 		if (AppState.currentState === 'active') {
 			Toast.showShortCenter('Connected to ' + deviceID);		
 		}
-
+		console.log('Connected to ' + deviceID);
     let hasAutoNotify = this.props.ble.knownPeripherals.filter(p=>p.autoNotify === true & p.id === deviceID);
     if (hasAutoNotify.length !== 0) {
       // Dirty hack. Prevents 2 concurrent retrieveServices native calls
@@ -216,25 +217,29 @@ class ScanView extends Component {
 		if (!device) return;
 		detailedDevice = this.props.ble.peripheralServiceData.filter(p=>p.id === device.id)[0];
 		if (!detailedDevice) return;
-		Actions.DeviceDetailView({title: device.name, device: detailedDevice});
+		Actions.DeviceDetailView({
+			title: device.name, 
+			device: detailedDevice,
+			handleAutoNotify: this.handleAutoNotify,
+		});
 	}
 
-	handleFavoritePress(device, favorite) {
+	handleFavoritePress(device, favorite, connected) {
 		if (!device) return;
 		if(favorite) {
-			this.props.bleFavoriteRemove(realm, device);
-			Toast.showLongBottom('Removed favorite. Auto-connect and auto-subscribe are now OFF.');
+			this.props.bleModifyDevice(realm, device, false, false, false);
+			Toast.showLongBottom('Removed favorite. Auto-connect and auto-record are now OFF.');
 		}
 		else {
-			this.props.bleFavoriteAdd(realm, device);
-			Toast.showLongBottom('Added favorite. Auto-connect and auto-subscribe are now ON.');
+			this.props.bleModifyDevice(realm, device, true, true, true);
+			if (connected) this.handleAutoNotify(device.id);
+			Toast.showLongBottom('Added favorite. Auto-connect and auto-record are now ON.');
 		} 
 	}
 
-	handleAutoConnect() {
+	handleAutoConnect(autoConnectPeripherals) {
 		// If device is set to autoConnect in DB, try to connect (unless already connected/connecting)
 		let { peripherals, connectedPeripherals, connectingPeripherals, knownPeripherals} = this.props.ble;
-		let autoConnectPeripherals = knownPeripherals.filter(p=>p.autoConnect === true);
 
 		autoConnectPeripherals.forEach((per) => {
 			let inRange = peripherals.map(p=>p.id).includes(per.id);
@@ -306,7 +311,7 @@ class ScanView extends Component {
 				<DeviceBox
 					mainAreaPress={connected ? that.handleInfoPress.bind(that, device) : that.handleConnectPress.bind(that, device)} 
 					disconnectPress={that.handleConnectPress.bind(that, device)}
-					favPress={that.handleFavoritePress.bind(that, device, favorite)}
+					favPress={that.handleFavoritePress.bind(that, device, favorite, connected)}
 					key={device.id} 
 					device={device}
 					favorite={favorite}
@@ -316,7 +321,7 @@ class ScanView extends Component {
 					style={[
 						deviceBox, 
 						{
-							backgroundColor: !inRange ? '#555' : connected ? 'navy' : connecting ? '#BBF': 'white',
+							backgroundColor: !inRange ? '#555' : connected ? Colors.BLUE : connecting ? '#BBF': 'white',
 						}]
 					}>
 				</DeviceBox>
@@ -384,7 +389,7 @@ styles = StyleSheet.create({
 		borderRadius: 5,
 		justifyContent: 'center',
 		alignItems: 'center',
-		backgroundColor: 'navy',
+		backgroundColor: Colors.BLUE,
 	},
 	buttonText: {
 		color: 'white',
@@ -397,7 +402,7 @@ styles = StyleSheet.create({
 		justifyContent: 'center',
 		alignItems: 'center',
 		marginTop: 15,
-		borderColor: 'navy',
+		borderColor: Colors.BLUE,
 	},
 	text: {
 		fontSize: 16,
@@ -460,8 +465,8 @@ function mapDispatchToProps(dispatch) {
     bleNotify: (BleManager, deviceID, charArray) => 
     	dispatch(bleNotify(BleManager, deviceID, charArray)),    
     bleNotifyStopped: (characteristic) => dispatch(bleNotifyStopped(characteristic)),
-    bleFavoriteAdd: (realm, device) => dispatch(bleFavoriteAdd(realm, device)),
-    bleFavoriteRemove: (realm, device) => dispatch(bleFavoriteRemove(realm, device)),
+    bleModifyDevice: (realm, device, favorite, autoConnect, autoNotify) => 
+    	dispatch(bleModifyDevice(realm, device, favorite, autoConnect, autoNotify)),
   };
 }
 

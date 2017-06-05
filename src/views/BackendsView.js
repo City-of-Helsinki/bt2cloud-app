@@ -12,6 +12,7 @@ import t from 'tcomb-form-native';
 import { connect } from 'react-redux';
 import realm from '../realm';
 import Utils from '../utils/utils';
+import Colors from '../colors';
 
 import FloatingActionButton from '../components/FloatingActionButton';
 
@@ -127,7 +128,7 @@ styles = StyleSheet.create({
 		borderRadius: 5,
 		justifyContent: 'center',
 		alignItems: 'center',
-		backgroundColor: 'navy',
+		backgroundColor: Colors.BLUE,
 		alignSelf: 'center',
 	},
 	buttonText: {

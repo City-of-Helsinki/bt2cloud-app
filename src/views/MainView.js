@@ -11,6 +11,7 @@ import ScanView from './ScanView';
 import BackendsView from './BackendsView';
 import SettingsView from './SettingsView';
 import Utils from '../utils/utils';
+import Colors from '../colors';
 
 import {
 	FILE_TAG_GPS,

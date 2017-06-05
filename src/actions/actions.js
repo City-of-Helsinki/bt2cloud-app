@@ -276,7 +276,7 @@ export function bleNotify(BleManager, deviceID, charArray) {
   return (dispatch) => {
     BleManager.startNotification(deviceID, charArray[0].service, charArray[0].characteristic)
       .then(()=> {
-        console.log('char array is now of length ' + charArray.length);
+        console.log('Notify started for ' + charArray[0].characteristic);
         dispatch(bleNotifyStarted(deviceID, charArray[0]));
         charArray.splice(0,1);
         if (charArray.length > 0) bleNotify(charArray);
@@ -302,30 +302,15 @@ export function bleNotifyStop(BleManager, deviceID, charArray) {
   }
 }
 
-export function bleFavoriteAdd(realm, device) {
+export function bleModifyDevice(realm, device, favorite, autoConnect, autoNotify) {
   return (dispatch)=> {
     realm.write(()=>{
       realm.create('Device', {
         id: device.id, 
         name: device.name, 
-        favorite: true,
-        autoConnect: true,
-        autoNotify: true,
-      }, true);
-    });
-    dispatch(bleUpdateKnownPeripherals());
-  }
-}
-
-export function bleFavoriteRemove(realm, device) {
-  return (dispatch)=> {
-    realm.write(()=>{
-      realm.create('Device', {
-        id: device.id, 
-        name: device.name, 
-        favorite: false,
-        autoConnect: false,
-        autoNotify: false,
+        favorite,
+        autoConnect,
+        autoNotify,
       }, true);
     });
     dispatch(bleUpdateKnownPeripherals());

@@ -88,7 +88,7 @@ android {
 
     defaultConfig {
         applicationId "com.ble_sovellus"
-        minSdkVersion 18
+        minSdkVersion 21
         targetSdkVersion 22
         versionCode 1
         versionName "1.0"
@@ -137,6 +137,7 @@ android {
 }
 
 dependencies {
+    compile project(':react-native-background-job')
     compile project(':react-native-fetch-blob')
     compile project(':react-native-zip-archive')
     compile project(':@remobile/react-native-toast')

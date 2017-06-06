@@ -12,6 +12,7 @@
     "moment": "^2.18.1",
     "react": "16.0.0-alpha.6",
     "react-native": "0.44.0",
+    "react-native-background-job": "^1.2.3",
     "react-native-background-timer": "^1.0.2",
     "react-native-ble-manager": "5.0.3",
     "react-native-device-info": "^0.10.2",

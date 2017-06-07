@@ -72,6 +72,15 @@ class ScanView extends Component {
 
 	componentDidMount() {
 		this.props.bleStart(BleManager);
+		try {
+			console.log('getting connected peripherals');
+			this.props.getConnectedPeripherals(BleManager);
+			this.props.getAvailablePeripherals(BleManager);
+		}
+		catch(err) {
+			console.log('not initialized. this is fine.');
+		}
+
 	}
 
 	componentWillUnmount() {
@@ -215,13 +224,19 @@ class ScanView extends Component {
 
 	handleInfoPress(device) {
 		if (!device) return;
-		detailedDevice = this.props.ble.peripheralServiceData.filter(p=>p.id === device.id)[0];
-		if (!detailedDevice) return;
-		Actions.DeviceDetailView({
-			title: device.name, 
-			device: detailedDevice,
-			handleAutoNotify: this.handleAutoNotify,
-		});
+		BleManager.retrieveServices(device.id)
+			.then((s) => {
+				console.log('device: ', s);
+				Actions.DeviceDetailView({
+					title: device.name, 
+					device: s,
+					handleAutoNotify: this.handleAutoNotify,
+				});
+			})
+			.catch((err) => {
+				console.log(err);
+			});
+
 	}
 
 	handleFavoritePress(device, favorite, connected) {

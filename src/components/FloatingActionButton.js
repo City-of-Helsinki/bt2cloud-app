@@ -25,8 +25,8 @@ class FloatingActionButton extends Component {
 
     return (
       <TouchableElement onPress={this.props.onPress}>
-        <View style={styles.container}>
-          <Text style={{color:'white'}}>Add new</Text>
+        <View style={[styles.container, {backgroundColor: this.props.color}]}>
+          <Text style={{color:'white', fontSize: this.props.size}}>{this.props.displayText}</Text>
         </View>
       </TouchableElement>
     );

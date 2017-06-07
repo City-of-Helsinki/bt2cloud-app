@@ -4,6 +4,7 @@ import {
   SETTINGS_CHANGE_FLUSH_TO_DISK, 
   SETTINGS_CHANGE_GPS_INTERVAL,
   SETTINGS_SET_DEVICE_INFO,
+  SETTINGS_REFRESH,
 } from '../constants';
 import {
   TEST_BACKEND_URL,
@@ -18,12 +19,7 @@ const initialState = {
   flushToDiskInterval: Utils.convertRealmResultsToArray(realm.objects('Settings'))[0].flushToDiskInterval,
   GPSInterval: Utils.convertRealmResultsToArray(realm.objects('Settings'))[0].saveGPSInterval,
   initializing: true,
-  activeBackend: {
-    url: TEST_BACKEND_URL,
-    user: null,
-    pass: null,
-    api_key: null,
-  }
+  activeBackend: Utils.convertRealmResultsToArray(realm.objects('Settings'))[0].activeBackend,
 };
 
 export default function settingsReducer (state = initialState, action) {
@@ -50,6 +46,13 @@ export default function settingsReducer (state = initialState, action) {
         },
         initializing: false,
       }
+
+    case SETTINGS_REFRESH:
+      let activeBackend = Utils.convertRealmResultsToArray(realm.objects('Settings'))[0].activeBackend;
+      return {
+        ...state,
+        activeBackend,
+      };
 
     default:
       return state;

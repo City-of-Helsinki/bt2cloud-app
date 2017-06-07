@@ -6,6 +6,8 @@ import {
 	TouchableHighlight,
 	ScrollView,
 	ActivityIndicator,
+	Dimensions,
+	Alert,
 } from 'react-native';
 
 import t from 'tcomb-form-native';
@@ -13,15 +15,18 @@ import { connect } from 'react-redux';
 import realm from '../realm';
 import Utils from '../utils/utils';
 import Colors from '../colors';
+import BackendBox from '../components/BackendBox';
 
 import FloatingActionButton from '../components/FloatingActionButton';
+
+import { SETTINGS_REFRESH } from '../constants';
 
 const Form = t.form.Form;
 
 const Protocol = t.enums({
 	http: 'http://',
 	https: 'https://',
-});
+}, 'Protocol');
 
 const Backend = t.struct({
 	name: t.String,
@@ -51,11 +56,17 @@ class BackendsView extends Component {
 		super(props);
 		this.handleFloatingButtonPress = this.handleFloatingButtonPress.bind(this);
 		this.handleCancelPress = this.handleCancelPress.bind(this);
+		this.handleSavePress = this.handleSavePress.bind(this);
+		this.handleRemovePress = this.handleRemovePress.bind(this);
+		this.handleEditPress = this.handleEditPress.bind(this);
+		this.handleSetActivePress = this.handleSetActivePress.bind(this);
+		this.onChange = this.onChange.bind(this);
 		this.state = {
 			editView: false,
 			formValue: {
 				protocol: 'https',
 			},
+			backends: Utils.convertRealmResultsToArray(realm.objects('Backend')) || [],
 		}
 	}
 
@@ -71,22 +82,101 @@ class BackendsView extends Component {
 		});
 	}
 
-	render() {
-		let { started, startError, scanning, scanError, peripherals, connectedPeripherals,
-			knownPeripherals, connectError, readHistory, notifyingChars } = this.props.ble;
+	handleSavePress() {
+		let formInput = this.refs.backendForm.getValue();
+		console.log(formInput);
+		if (formInput) {
+			this.setState({formValue: {protocol: 'https'}, editView: false});
+			let { name, protocol, url } = formInput;
+			realm.write(()=>{
+				let backend = realm.create('Backend', {
+					name,
+					protocol,
+					url,
+				}, true);
+			});
+			this.setState({backends: Utils.convertRealmResultsToArray(realm.objects('Backend'))});
+		}
+	}
 
+	onChange(formValue){
+		this.setState({formValue});
+	}
+
+	handleRemovePress(backendObject){
+    Alert.alert(
+      'Remove backend',
+      'Are you sure?',
+      [
+        {text: 'Cancel', style: 'cancel'},
+        {text: 'OK', onPress: this.handleConfirmRemove.bind(this, backendObject)}
+      ],
+      {cancelable:false}
+    );
+
+	}
+
+	handleConfirmRemove(backendObject){
+		realm.write(()=>{
+			let backend = realm.objects('Backend').filtered('name == $0', backendObject.name)[0];
+			realm.delete(backend);
+		});
+		this.props.refreshSettings();				
+	}
+
+	handleEditPress(){
+
+	}
+
+	handleSetActivePress(backendObject){
+		realm.write(()=>{
+			let backend = realm.objects('Backend').filtered('name == $0', backendObject.name)[0];
+			realm.create('Settings', {
+				name: 'settings',
+				activeBackend: backend,
+			}, true);
+		});
+		this.props.refreshSettings();
+	}
+
+	render() {
+		let that = this;
+		function renderBackends(backends) {
+			if (backends && backends.length > 0) {
+			return backends.map(b=> {
+				let active = !that.props.settings.activeBackend ? false 
+					: that.props.settings.activeBackend.name === b.name;
+				return (
+					<BackendBox 
+						backend={b} 
+						active={active}
+						style={active ? activeBackendBox : backendBox} 
+						removePress={that.handleRemovePress}
+						editPress={that.handleEditPress}
+						setActivePress={(that.handleSetActivePress)}
+					/>
+				);
+			});
+			}
+			else return <Text>No backends set. Press the + button to add a backend.</Text>;
+		}		
+
+		let { editView, backends } = this.state;
+		console.log('editview is ' + editView);
+		console.log(this.props.settings);
 		return (
 			<View style={container}>
-				{this.state.editView && <ScrollView>
+				{editView && <ScrollView>
 					<View style={scrollView}>
 						<Form
 							ref='backendForm'
 							type={Backend}
 							value={this.state.formValue}
 							options={options}
+							onChange={this.onChange}
 						/>
 						<View style={formButtons}>
-							<TouchableHighlight onPress={() => console.log('pressed')} style={button}>
+							<TouchableHighlight onPress={this.handleSavePress} style={button}>
 								<Text style={buttonText}>Save</Text>
 							</TouchableHighlight>	
 							<TouchableHighlight onPress={this.handleCancelPress} style={button}>
@@ -96,14 +186,20 @@ class BackendsView extends Component {
 					</View>
 				</ScrollView>
 				}
-				{!this.state.editView && 
+				{!editView && 
 				<View style={{flex:1}}>
 					<ScrollView>
 						<View style={scrollView}>
-							<Text style={text}>No backends set. Press 'Add New' to add a backend. Spoiler alert: adding a backend doesn't work yet.</Text>
+						<Text style={text}>Active backend is marked blue.</Text>
+						{renderBackends(backends)}
 						</View>
 					</ScrollView>
-					<FloatingActionButton onPress={this.handleFloatingButtonPress}/>
+					<FloatingActionButton 
+						displayText="+" 
+						color={Colors.GREEN} 
+						size={40} 
+						onPress={this.handleFloatingButtonPress}
+					/>
 				</View>
 				}
 			</View>
@@ -153,7 +249,27 @@ styles = StyleSheet.create({
 	formButtons: {
 		flexDirection: 'row',
 		justifyContent: 'space-between',
-	}
+	},
+	backendBox: {
+		width: Dimensions.get('window').width - 40,
+		height: 60,
+		borderWidth: 1,
+		justifyContent: 'center',
+		alignItems: 'center',
+		marginTop: 15,
+		borderColor: Colors.BLUE,
+		backgroundColor: Colors.WHITE,
+	},	
+	activeBackendBox: {
+		width: Dimensions.get('window').width - 40,
+		height: 60,
+		borderWidth: 1,
+		justifyContent: 'center',
+		alignItems: 'center',
+		marginTop: 15,
+		borderColor: Colors.BLUE,
+		backgroundColor: Colors.BLUE,
+	},		
 });
 
 const { 
@@ -164,16 +280,19 @@ const {
 	textSmall,
 	scrollView,
 	formButtons,
+	backendBox,
+	activeBackendBox,
 } = styles;
 
 function mapStateToProps(state) {
   return {
-    ble: state.ble
+  	settings: state.settings,
   };
 }
 
 function mapDispatchToProps(dispatch) {
   return {
+  	refreshSettings: () => dispatch({type: SETTINGS_REFRESH}),
   };
 }
 

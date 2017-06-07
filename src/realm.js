@@ -24,6 +24,16 @@ const DataSchema = {
 	}
 };
 
+const BackendSchema = {
+	name: 'Backend',
+	primaryKey: 'name',
+	properties: {
+		name: 'string',
+		protocol: 'string',
+		url: 'string',
+	},
+};
+
 const SettingsSchema = {
 	name: 'Settings',
 	primaryKey: 'name',
@@ -31,12 +41,17 @@ const SettingsSchema = {
 		name: 'string',
 		flushToDiskInterval: {type: 'int', default: 50},
 		saveGPSInterval: {type: 'int', default: 30},
+		activeBackend: {type: 'Backend', optional: true},	
 	},
 };
 
+// schemaVersion 1 added autoConnect/autoNotify to DeviceSchema
+// schemaVersion 2 added BackendSchema
+// schemaVersion 3 added activeBackend to SettingsSchema
+
 let realm = new Realm({
-	schema: [DeviceSchema, DataSchema, SettingsSchema],
-	schemaVersion: 1,
+	schema: [DeviceSchema, DataSchema, SettingsSchema, BackendSchema],
+	schemaVersion: 3,
 });
 
 realm.write(()=>{

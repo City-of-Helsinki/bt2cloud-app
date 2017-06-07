@@ -15,8 +15,8 @@ const CharBox = (props) => {
 			<View style={props.style}>
 				<View style={innerContainer}>
 					<View style={contentContainer}>
-					<Text style={text}>
-						{props.characteristic}
+					<Text style={biggerText}>
+						Purpose: {props.purpose}
 					</Text>
 					</View>
 					{props.notify && 
@@ -38,14 +38,17 @@ const CharBox = (props) => {
 				{props.newestValue && 
 					<View style={innerContainer}>
 						<View style={contentContainer}>
-							<Text style={text}>
+							<Text style={biggerText}>
+								Newest value:
+							</Text>							
+							<Text style={biggerText}>
+								Time: {moment(props.newestValue.time).format('YYYY-MM-DD @ hh:mm:ss')}
+							</Text>						
+							<Text style={biggerText}>
 								Value: {props.newestValue.ascii}
 							</Text>
 							<Text style={text}>
 								Hex: {props.newestValue.hex}
-							</Text>
-							<Text style={text}>
-								Time: {moment(props.newestValue.time).format()}
 							</Text>
 							<Text style={text}>
 								No. of objects: {props.valueCount}
@@ -83,16 +86,21 @@ const styles = StyleSheet.create({
 		borderWidth: 1,
 	},
 	text:{
-		fontSize: 12,	
-		color: 'navy',
+		fontSize: 11,	
+		color: Colors.GREY,
 	},
+	biggerText:{
+		fontSize: 14,	
+		color: Colors.BLUE,
+	},	
 	buttonText:{
 		fontSize: 14,	
-		color: 'white',
+		color: Colors.WHITE,
 	}
 });
 const { 
 	text, 
+	biggerText,
 	buttonText,
 	innerContainer, 
 	contentContainer, 

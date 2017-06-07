@@ -16,6 +16,8 @@ import realm from '../realm';
 import Utils from '../utils/utils';
 import Colors from '../colors';
 
+import moment from 'moment';
+
 import {
 	settingsChangeFlushToDisk,
 	settingsChangeGPSInterval,
@@ -27,7 +29,8 @@ class SettingsView extends Component {
 		super(props);
 		this.saveDiskIntervalToDB = this.saveDiskIntervalToDB.bind(this);
 		this.saveGPSIntervalToDB = this.saveGPSIntervalToDB.bind(this);
-		this.sendToBackend = this.sendToBackend.bind(this);
+		this.handleSendPress = this.handleSendPress.bind(this);
+		this.sendFile = this.sendFile.bind(this);
 	}
 
 	saveDiskIntervalToDB(value) {
@@ -49,28 +52,52 @@ class SettingsView extends Component {
 		});
 	}
 
-	sendToBackend() {
+	sendFile(filenames, totalFiles, remainingFiles, datestring) {
+		if (filenames.length < 1) return;
+		let request = {
+			type: 'POST',
+			url: this.props.settings.activeBackend.url,
+			headers: {
+				'Content-Type': 'multipart/form-data',
+				'User-Agent': 'Bt2Cloud/v0.1/' + datestring, 
+			},
+			filename: filenames[0],
+			metadata: {
+				phoneId: this.props.settings.deviceInfo.id,
+			},
+		};
+		Utils.httpRequest(request)
+			.then((res)=> {
+				console.log(res);
+				Utils.moveToSentFolder(filenames[0])
+					.then(()=> {
+						console.log('moved');
+						filenames.splice(0,1);
+						remainingFiles -= 1;
+						if (filenames.length>0) this.sendFile(filenames, totalFiles, remainingFiles, datestring);
+						else console.log('Successfully sent ' + totalFiles + '/' + totalFiles + ' files');						
+					})
+					.catch((err)=> {
+						console.log(err);
+					});
+			})
+			.catch((err)=> {
+				console.log('Error sending to backend: ' + err);
+				filenames.splice(0,1);
+				if (filenames.length>0) this.sendFile(filenames, totalFiles, remainingFiles, datestring);
+				else console.log('Successfully sent ' + totalFiles + '/' + totalFiles + ' files');
+			});
+	}
+
+	handleSendPress() {
 		Utils.createZip()
 			.then((data)=> {
 				console.log('Successfully created zip at ' + data.path);
-				let request = {
-					type: 'POST',
-					url: this.props.settings.activeBackend.url,
-					headers: {
-						'Content-Type': 'multipart/form-data',
-					},
-					filename: data.filename,
-					path: data.path,
-					metadata: {
-						phoneId: this.props.settings.deviceInfo.id,
-					},
-				};
-				Utils.httpRequest(request)
-					.then((res)=> {
-						console.log(res);
-					})
-					.catch((err)=> {
-						console.log('Error sending to backend: ' + err);
+				Utils.getUnsentZips()
+					.then((filenames)=>{
+						let datestring = moment(new Date()).format('YYYY-MM-DD');
+						files = filenames.slice();
+						this.sendFile(files, files.length, files.length, datestring);
 					});
 			})
 			.catch((err)=> {
@@ -109,7 +136,7 @@ class SettingsView extends Component {
 							onSlidingComplete={(value)=>this.saveGPSIntervalToDB(value)}
 						/>
 
-						<TouchableHighlight style={button} onPress={this.sendToBackend}>
+						<TouchableHighlight style={button} onPress={this.handleSendPress}>
 							<Text style={buttonText}>Send to backend</Text>
 						</TouchableHighlight>
 					</View>

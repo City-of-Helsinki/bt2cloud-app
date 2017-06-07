@@ -84,13 +84,41 @@ export default {
 		});
 	},
 
+	getUnsentZips: () => {
+		return new Promise((resolve, reject) => {
+			fs.readdir(fs.ExternalDirectoryPath)
+				.then((filenames)=> {
+					resolve(filenames.filter(f=>f.substr(f.length-4) === '.zip').reverse());
+				})
+				.catch((err)=> {
+					reject ([]);
+				});			
+		});
+	},
+
+	moveToSentFolder: (filename) => {
+		return new Promise((resolve, reject) => {
+			let sourcePath = fs.ExternalDirectoryPath + '/' + filename;
+			console.log(sourcePath);
+			let targetPath = fs.ExternalDirectoryPath + FILE_SENT_SAVE_PATH + filename;	
+			fs.moveFile(sourcePath, targetPath)
+				.then(()=>{
+					resolve();
+				})
+				.catch((err)=>{
+					reject(err);
+				});								
+		});
+	},
+
 	httpRequest: (request) => {
 		return new Promise((resolve, reject) => {
-			let { type, url, headers, filename, path, metadata } = request;
+			let { type, url, headers, filename, metadata } = request;
+			let path = fs.ExternalDirectoryPath + '/' + filename;
 			console.log(path);
 			FetchBlob.fetch(type, url, headers, 
 				[
-					{ name: 'bt2cloud-logfile', filename: filename, type: 'archive/zip', data: FetchBlob.wrap(path)},
+					{ name: 'file', filename: filename, type: 'archive/zip', data: FetchBlob.wrap(path)},
 					{ name: 'metadata', data: JSON.stringify(metadata)},
 				])
 				.then((res) => {

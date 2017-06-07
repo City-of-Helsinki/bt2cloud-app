@@ -51,15 +51,19 @@ class SettingsView extends Component {
 
 	sendToBackend() {
 		Utils.createZip()
-			.then((path)=> {
-				console.log('Successfully created zip at ' + path);
+			.then((data)=> {
+				console.log('Successfully created zip at ' + data.path);
 				let request = {
 					type: 'POST',
 					url: this.props.settings.activeBackend.url,
 					headers: {
-						'Content-Type': 'application/octet-stream',
+						'Content-Type': 'multipart/form-data',
 					},
-					filepath: path,
+					filename: data.filename,
+					path: data.path,
+					metadata: {
+						phoneId: this.props.settings.deviceInfo.id,
+					},
 				};
 				Utils.httpRequest(request)
 					.then((res)=> {

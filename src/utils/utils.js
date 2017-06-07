@@ -75,7 +75,8 @@ export default {
 			let targetPath = fs.ExternalDirectoryPath + '/' + filename;
 			zip(sourcePath, targetPath)
 				.then((path) => {
-					resolve(path);
+					let data = {filename, path}
+					resolve(data);
 				})
 				.catch((err) => {
 					reject(err);
@@ -85,9 +86,13 @@ export default {
 
 	httpRequest: (request) => {
 		return new Promise((resolve, reject) => {
-			let { type, url, headers, filepath } = request;
-			console.log(FetchBlob.wrap(filepath));
-			FetchBlob.fetch(type, url, headers, FetchBlob.wrap(filepath))
+			let { type, url, headers, filename, path, metadata } = request;
+			console.log(path);
+			FetchBlob.fetch(type, url, headers, 
+				[
+					{ name: 'bt2cloud-logfile', filename: filename, type: 'archive/zip', data: FetchBlob.wrap(path)},
+					{ name: 'metadata', data: JSON.stringify(metadata)},
+				])
 				.then((res) => {
 					resolve(res.text());
 				})

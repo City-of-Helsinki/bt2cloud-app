@@ -3,7 +3,9 @@
 
 //BLE
 export const BLE_START = 'BLE_START';
+export const BLE_STARTING = 'BLE_STARTING';
 export const BLE_SCAN_START = 'BLE_SCAN_START';
+export const BLE_SCAN_STARTING = 'BLE_SCAN_STARTING';
 export const BLE_SCAN_ENDED = 'BLE_SCAN_ENDED';
 
 export const BLE_CONNECTING = 'BLE_CONNECTING';

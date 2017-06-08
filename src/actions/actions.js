@@ -1,6 +1,8 @@
 import { 
   BLE_START, 
-  BLE_SCAN_START, 
+  BLE_STARTING,
+  BLE_SCAN_START,
+  BLE_SCAN_STARTING,
   BLE_SCAN_ENDED, 
   BLE_CONNECTING,
   BLE_CONNECT_ERROR,
@@ -35,6 +37,7 @@ export function bleStartResult(error) {
 
 export function bleStart(BleManager) {
   return (dispatch) => {
+    dispatch({type: BLE_STARTING});
     BleManager.start({showAlert: false})
       .then(()=> {
         dispatch(bleStartResult());
@@ -58,6 +61,7 @@ export function bleScanStartResult(error) {
 
 export function bleScanStart(BleManager) {
   return (dispatch) => {
+    dispatch({type: BLE_SCAN_STARTING});
     BleManager.scan([], 60)
       .then(() => {
         dispatch(bleScanStartResult());

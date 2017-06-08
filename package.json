@@ -21,6 +21,7 @@
     "react-native-router-flux": "^3.38.0",
     "react-native-scrollable-tab-view": "^0.6.5",
     "react-native-switch-pro": "^0.4.2",
+    "react-native-uuid": "^1.4.9",
     "react-native-vector-icons": "^4.1.1",
     "react-native-zip-archive": "^1.1.1",
     "react-redux": "^5.0.4",

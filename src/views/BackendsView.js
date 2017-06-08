@@ -11,6 +11,8 @@ import {
 } from 'react-native';
 
 import t from 'tcomb-form-native';
+import moment from 'moment';
+import generateUuid from 'react-native-uuid';
 import { connect } from 'react-redux';
 import realm from '../realm';
 import Utils from '../utils/utils';
@@ -61,8 +63,11 @@ class BackendsView extends Component {
 		this.handleEditPress = this.handleEditPress.bind(this);
 		this.handleSetActivePress = this.handleSetActivePress.bind(this);
 		this.onChange = this.onChange.bind(this);
+		this.handleSendPress = this.handleSendPress.bind(this);
+		this.sendFile = this.sendFile.bind(this);		
 		this.state = {
 			editView: false,
+			editedBackend: null,
 			formValue: {
 				protocol: 'https',
 			},
@@ -73,6 +78,7 @@ class BackendsView extends Component {
 	handleFloatingButtonPress() {
 		this.setState({
 			editView: true,
+			editedBackend: null,
 		});
 	}
 
@@ -84,12 +90,15 @@ class BackendsView extends Component {
 
 	handleSavePress() {
 		let formInput = this.refs.backendForm.getValue();
+		let uuid = this.state.editedBackend ? this.state.editedBackend : generateUuid.v4();
+		console.log(uuid, typeof uuid);
 		console.log(formInput);
 		if (formInput) {
 			this.setState({formValue: {protocol: 'https'}, editView: false});
 			let { name, protocol, url } = formInput;
 			realm.write(()=>{
 				let backend = realm.create('Backend', {
+					id: uuid,	
 					name,
 					protocol,
 					url,
@@ -116,21 +125,41 @@ class BackendsView extends Component {
 
 	}
 
-	handleConfirmRemove(backendObject){
+	handleConfirmRemove(backendObject){		
+		let that = this;
 		realm.write(()=>{
-			let backend = realm.objects('Backend').filtered('name == $0', backendObject.name)[0];
+			let backend = realm.objects('Backend').filtered('id == $0', backendObject.id)[0];
+			let settings = realm.objects('Settings').filtered('name == $0', 'settings')[0];
+
+			if (settings.activeBackend && settings.activeBackend.id === backend.id) {
+				console.log('Marking active backend as null');
+				realm.create('Settings', {
+					name: 'settings',
+					activeBackend: null,
+				}, true);		
+				that.props.refreshSettings();
+			}
+
 			realm.delete(backend);
-		});
-		this.props.refreshSettings();				
+			that.setState({backends: Utils.convertRealmResultsToArray(realm.objects('Backend'))});
+		});			
 	}
 
-	handleEditPress(){
-
+	handleEditPress(backendObject){
+			this.setState({
+				editView: true,
+				editedBackend: backendObject.id,
+				formValue: {
+					name: backendObject.name,
+					protocol: backendObject.protocol,
+					url: backendObject.url,
+				},
+			})
 	}
 
 	handleSetActivePress(backendObject){
 		realm.write(()=>{
-			let backend = realm.objects('Backend').filtered('name == $0', backendObject.name)[0];
+			let backend = realm.objects('Backend').filtered('id == $0', backendObject.id)[0];
 			realm.create('Settings', {
 				name: 'settings',
 				activeBackend: backend,
@@ -139,15 +168,76 @@ class BackendsView extends Component {
 		this.props.refreshSettings();
 	}
 
+	sendFile(filenames, totalFiles, remainingFiles, datestring) {
+		console.log('sendFile');
+		if (filenames.length < 1) return;
+		let protocol = this.props.settings.activeBackend.protocol;
+		let url = this.props.settings.activeBackend.url;
+		let request = {
+			type: 'POST',
+			url: protocol + '://' + url,
+			headers: {
+				'Content-Type': 'multipart/form-data',
+				'User-Agent': 'Bt2Cloud/v0.1/' + datestring, 
+			},
+			filename: filenames[0],
+			metadata: {
+				phoneId: this.props.settings.deviceInfo.id,
+			},
+		};
+
+		console.log(request);
+		Utils.httpRequest(request)
+			.then((res)=> {
+				console.log(res);
+				Utils.moveToSentFolder(filenames[0])
+					.then(()=> {
+						console.log('moved');
+						filenames.splice(0,1);
+						remainingFiles -= 1;
+						if (filenames.length>0) this.sendFile(filenames, totalFiles, remainingFiles, datestring);
+						else Alert.alert('Success', 'Successfully sent ' + (totalFiles-remainingFiles) + '/' + totalFiles + ' zip files');						
+					})
+					.catch((err)=> {
+						console.log(err);
+					});
+			})
+			.catch((err)=> {
+				console.log('Error sending to backend: ' + err);
+				filenames.splice(0,1);
+				if (filenames.length>0) this.sendFile(filenames, totalFiles, remainingFiles, datestring);
+				else Alert.alert('Success', 'Successfully sent ' + (totalFiles-remainingFiles) + '/' + totalFiles + ' zip files');
+			});
+	}
+
+	handleSendPress() {
+		Utils.createZip()
+			.then((data)=> {
+				console.log('Successfully created zip at ' + data.path);
+				Utils.deleteUnsentFolder();
+					Utils.getUnsentZips()
+						.then((filenames)=>{
+							console.log('filenames length' + filenames.length);
+							let datestring = moment(new Date()).format('YYYY-MM-DD');
+							files = filenames.slice();
+							this.sendFile(files, files.length, files.length, datestring);
+						});											
+			})
+			.catch((err)=> {
+				Alert.alert('Error', 'Error creating zip - file in use. Please try again. ' +err);
+			});
+	}
+
 	render() {
 		let that = this;
 		function renderBackends(backends) {
 			if (backends && backends.length > 0) {
 			return backends.map(b=> {
 				let active = !that.props.settings.activeBackend ? false 
-					: that.props.settings.activeBackend.name === b.name;
+					: that.props.settings.activeBackend.id === b.id;
 				return (
 					<BackendBox 
+						key={b.name}
 						backend={b} 
 						active={active}
 						style={active ? activeBackendBox : backendBox} 
@@ -194,14 +284,20 @@ class BackendsView extends Component {
 						{renderBackends(backends)}
 						</View>
 					</ScrollView>
+					<TouchableHighlight style={largeButton} onPress={this.handleSendPress}>
+						<Text style={buttonTextSmaller}>Send BLE/GPS data to backend</Text>
+					</TouchableHighlight>					
+				</View>
+				}
+				{!editView &&
 					<FloatingActionButton 
 						displayText="+" 
 						color={Colors.GREEN} 
-						size={40} 
+						fontSize={40}
+						size={60} 
 						onPress={this.handleFloatingButtonPress}
-					/>
-				</View>
-				}
+					/>	
+				}			
 			</View>
 		);
 	}
@@ -212,7 +308,7 @@ styles = StyleSheet.create({
 	container: {
 		flex: 1,
 		alignItems: 'stretch',
-		justifyContent: 'flex-start',
+		justifyContent: 'flex-end',
 		paddingBottom: 20,
 		paddingHorizontal: 20,
 		marginTop: 20,
@@ -227,10 +323,26 @@ styles = StyleSheet.create({
 		backgroundColor: Colors.BLUE,
 		alignSelf: 'center',
 	},
+	largeButton: {
+		marginTop: 20,
+		width: 200,
+		height: 60,
+		borderRadius: 5,
+		justifyContent: 'center',
+		alignItems: 'center',
+		backgroundColor: Colors.BLUE,
+		alignSelf: 'center',
+	},	
 	buttonText: {
 		color: 'white',
 		fontSize: 20,
+		textAlign: 'center',
 	},
+	buttonTextSmaller: {
+		color: 'white',
+		fontSize: 15,
+		textAlign: 'center',
+	},	
 	text: {
 		fontSize: 18,
 		color: 'black',
@@ -275,7 +387,9 @@ styles = StyleSheet.create({
 const { 
 	container, 
 	button,
+	largeButton,
 	buttonText, 
+	buttonTextSmaller,
 	text, 
 	textSmall,
 	scrollView,

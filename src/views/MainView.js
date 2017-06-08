@@ -71,6 +71,7 @@ class MainView extends Component {
 	}
 
 	render() {
+		console.log('mainView render');
 	  return (
 	    <ScrollableTabView renderTabBar={() => <TabBar />}>
 	      <ScanView tabLabel="Nearby devices" />

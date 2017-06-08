@@ -71,15 +71,15 @@ class ScanView extends Component {
 	}
 
 	componentDidMount() {
-		this.props.bleStart(BleManager);
-		try {
+		if (!this.props.ble.started && !this.props.ble.starting) this.props.bleStart(BleManager);
+		/*try {
 			console.log('getting connected peripherals');
 			this.props.getConnectedPeripherals(BleManager);
 			this.props.getAvailablePeripherals(BleManager);
 		}
 		catch(err) {
 			console.log('not initialized. this is fine.');
-		}
+		}*/
 
 	}
 
@@ -97,7 +97,7 @@ class ScanView extends Component {
     this.handleAutoConnect(autoConnectPeripherals);
 		
 		// if service started and startScanByDefault is true, start scan immediately
-		if (this.props.ble.started && !this.props.ble.scanning
+		if (this.props.ble.started && !this.props.ble.scanStarting && !this.props.ble.scanning
 			&& this.props.ble.startScanByDefault) {
 			this.props.bleScanStart(BleManager);
 			this.props.getConnectedPeripherals(BleManager);
@@ -109,8 +109,10 @@ class ScanView extends Component {
 	handleDiscoverPeripheral(peripheral) {
 
 		// parse legible text from here
-		let base64Array = new Buffer(peripheral.advertising.data, 'base64').toString('ascii').split('');
-		this.props.bleUpdateAvailablePeripherals(peripheral, null);
+		// let base64Array = new Buffer(peripheral.advertising.data, 'base64').toString('ascii').split('');
+		if (!this.props.ble.peripherals.map(p=>p.id).includes(peripheral.id)) {
+			this.props.bleUpdateAvailablePeripherals(peripheral, null);
+		}
 	}
 
 	handleConnectPeripheral(data) {		
@@ -304,7 +306,7 @@ class ScanView extends Component {
 		let { started, startError, scanning, scanError, peripherals, connectedPeripherals,
 			connectingPeripherals, knownPeripherals, connectError } = this.props.ble;
 		let favoritePeripherals = knownPeripherals.filter(p=>p.favorite === true);
-
+		console.log('Scanview render');
 		function scanText() {
 			if (scanning) return <Text style={buttonText}>Press to Stop</Text>
 			else return <Text style={buttonText}>Press to Scan</Text>

@@ -2,7 +2,9 @@ import Utils from '../utils/utils';
 import realm from '../realm';
 import { 
   BLE_START, 
+  BLE_STARTING,
   BLE_SCAN_START, 
+  BLE_SCAN_STARTING,
   BLE_SCAN_ENDED, 
   BLE_CONNECTING,
   BLE_CONNECT_ERROR,
@@ -19,8 +21,10 @@ import {
 } from '../constants';
 const initialState = {
   started: false,
+  starting: false,
   startScanByDefault: true,
   startError: null,
+  scanStarting: false,
   scanning: false,
   scanError: null,
   peripherals: [], // available peripherals (scanned)
@@ -40,19 +44,36 @@ export default function bleReducer (state = initialState, action) {
     peripheralServiceData, readHistory, notifyingChars;
 
   switch (action.type) {
+
+    case BLE_STARTING:
+      return {
+        ...state,
+        starting: true,
+      };
+
     case BLE_START: 
+      console.log('BLE_START');
       return {
         ...state,
         started: action.started,
+        starting: false,
         startError: action.error ? action.error : null
       };
 
+    case BLE_SCAN_STARTING:
+      return {
+        ...state,
+        scanStarting: true,
+      };
+
     case BLE_SCAN_START: 
+      console.log('BLE_SCAN_START');
       // clear devices from state except those that are connected
       peripherals = state.connectedPeripherals.slice();
       return {
         ...state,
         scanning: action.scanning,
+        scanStarting: false,
         peripherals, 
         scanError: action.error ? action.error : null
       };
@@ -82,6 +103,7 @@ export default function bleReducer (state = initialState, action) {
       }
 
     case BLE_UPDATE_AVAILABLE_PERIPHERALS:
+      console.log('BLE_UPDATE_AVAILABLE');
       if (action.peripherals) { // if we got all available peripherals, just update state to equal that array
         peripherals = action.peripherals;
       }
@@ -97,6 +119,7 @@ export default function bleReducer (state = initialState, action) {
       };  
 
     case BLE_UPDATE_CONNECTED_PERIPHERALS:
+      console.log('BLE_UPDATE_CONNECTED');
       connectedPeripherals = action.peripherals;
       connectingPeripherals = state.connectingPeripherals;
       peripherals = state.peripherals;
@@ -112,6 +135,7 @@ export default function bleReducer (state = initialState, action) {
       }; 
 
     case BLE_UPDATE_KNOWN_PERIPHERALS:
+      console.log('BLE_UPDATE_KNOWN');
       knownPeripherals = Utils.convertRealmResultsToArray(realm.objects('Device')) || [];
       peripheralServiceData = state.peripheralServiceData;
       if (action.data) {

@@ -6,7 +6,7 @@ import {
 	TouchableHighlight,
 	ScrollView,
 	ActivityIndicator,
-	Slider,
+	TextInput,
 	Dimensions,
 	Alert,
 } from 'react-native';
@@ -29,8 +29,9 @@ class SettingsView extends Component {
 		super(props);
 		this.saveDiskIntervalToDB = this.saveDiskIntervalToDB.bind(this);
 		this.saveGPSIntervalToDB = this.saveGPSIntervalToDB.bind(this);
-		this.handleSendPress = this.handleSendPress.bind(this);
-		this.sendFile = this.sendFile.bind(this);
+		this.state={
+			gpsInputValue: props.settings.GPSInterval.toString(),
+		};
 	}
 
 	saveDiskIntervalToDB(value) {
@@ -40,72 +41,21 @@ class SettingsView extends Component {
 				flushToDiskInterval: value,
 			}, true);
 		});
-
 	}
 	
-	saveGPSIntervalToDB(value) {
+	saveGPSIntervalToDB() {
+		console.log(this.state.gpsInputValue);
+		let value = parseInt(this.state.gpsInputValue, 10);
+		if (value < 1) value = 1;
+		if (value > 3600) value = 3600;
 		realm.write(()=>{
 			realm.create('Settings', {
 				name: 'settings',
 				saveGPSInterval: value,
 			}, true);
 		});
-	}
-
-	sendFile(filenames, totalFiles, remainingFiles, datestring) {
-		if (filenames.length < 1) return;
-		let protocol = this.props.settings.activeBackend.protocol;
-		let url = this.props.settings.activeBackend.url;
-		let request = {
-			type: 'POST',
-			url: protocol + '://' + url,
-			headers: {
-				'Content-Type': 'multipart/form-data',
-				'User-Agent': 'Bt2Cloud/v0.1/' + datestring, 
-			},
-			filename: filenames[0],
-			metadata: {
-				phoneId: this.props.settings.deviceInfo.id,
-			},
-		};
-		Utils.httpRequest(request)
-			.then((res)=> {
-				console.log(res);
-				Utils.moveToSentFolder(filenames[0])
-					.then(()=> {
-						console.log('moved');
-						filenames.splice(0,1);
-						remainingFiles -= 1;
-						if (filenames.length>0) this.sendFile(filenames, totalFiles, remainingFiles, datestring);
-						else console.log('Successfully sent ' + totalFiles + '/' + totalFiles + ' files');						
-					})
-					.catch((err)=> {
-						console.log(err);
-					});
-			})
-			.catch((err)=> {
-				console.log('Error sending to backend: ' + err);
-				filenames.splice(0,1);
-				if (filenames.length>0) this.sendFile(filenames, totalFiles, remainingFiles, datestring);
-				else console.log('Successfully sent ' + totalFiles + '/' + totalFiles + ' files');
-			});
-	}
-
-	handleSendPress() {
-		Utils.createZip()
-			.then((data)=> {
-				console.log('Successfully created zip at ' + data.path);
-				Utils.deleteUnsentFolder();
-					Utils.getUnsentZips()
-						.then((filenames)=>{
-							let datestring = moment(new Date()).format('YYYY-MM-DD');
-							files = filenames.slice();
-							this.sendFile(files, files.length, files.length, datestring);
-						});											
-			})
-			.catch((err)=> {
-				console.log('Error creating zip: ' + err.message);
-			});
+		this.setState({gpsInputValue: value});
+		this.props.settingsChangeGPSInterval(value);
 	}
 
 	render() {
@@ -118,30 +68,19 @@ class SettingsView extends Component {
 						<Text style={text}>Device ID: {deviceInfo.id}</Text>
 						<Text style={text}>Model: {deviceInfo.model}</Text>
 						<Text style={text}>OS: {deviceInfo.os}</Text>
-						<Text style={sliderText}>Save char data to disk every {flushToDiskInterval} reads</Text>
-						<Slider 
-							minimumValue={1}
-							maximumValue={100}
-							value={flushToDiskInterval}
-							style={slider}
-							step={1}
-							onValueChange={(value)=>this.props.settingsChangeFlushToDisk(value)}
-							onSlidingComplete={(value)=>this.saveDiskIntervalToDB(value)}
+						<Text style={sliderText}>GPS location logging interval (seconds):</Text>
+						<TextInput
+							ref={(ref)=> {this.textInput = ref;}}
+							maxLength={4}
+							defaultValue={this.props.settings.GPSInterval.toString()}
+							keyboardType='numeric'
+							onChangeText={(v)=>this.setState({gpsInputValue: v})}
+							onEndEditing={()=>this.saveGPSIntervalToDB()}
+							returnKeyType='done'
+							selectTextOnFocus={true}
+							style={textInput}
+							underlineColorAndroid='transparent'
 						/>
-						<Text style={sliderText}>Record GPS location every {GPSInterval} seconds</Text>
-						<Slider 
-							minimumValue={10}
-							maximumValue={600}
-							value={GPSInterval}
-							style={slider}
-							step={10}
-							onValueChange={(value)=>this.props.settingsChangeGPSInterval(value)}
-							onSlidingComplete={(value)=>this.saveGPSIntervalToDB(value)}
-						/>
-
-						<TouchableHighlight style={button} onPress={this.handleSendPress}>
-							<Text style={buttonText}>Send to backend</Text>
-						</TouchableHighlight>
 					</View>
 				</ScrollView>
 			</View>
@@ -149,6 +88,17 @@ class SettingsView extends Component {
 	}
 	
 }
+
+/*<Text style={sliderText}>Save char data to disk every {flushToDiskInterval} reads</Text>
+<Slider 
+	minimumValue={1}
+	maximumValue={100}
+	value={flushToDiskInterval}
+	style={slider}
+	step={1}
+	onValueChange={(value)=>this.props.settingsChangeFlushToDisk(value)}
+	onSlidingComplete={(value)=>this.saveDiskIntervalToDB(value)}
+/>*/
 
 styles = StyleSheet.create({
 	container: {
@@ -185,7 +135,7 @@ styles = StyleSheet.create({
 	scrollView: {
 		flex: 1,
 		justifyContent: 'flex-end',
-		alignItems: 'stretch',
+		alignItems: 'center',
 		alignSelf: 'center',
 	},
 	formButtons: {
@@ -201,6 +151,13 @@ styles = StyleSheet.create({
 		fontWeight: '800',
 		textAlign: 'center',
 		marginTop: 40,
+	},
+	textInput: {
+		marginTop: 20,
+		fontSize: 20,
+		width: 60,
+		borderWidth: 1,
+		textAlign: 'center',
 	}
 });
 
@@ -214,6 +171,7 @@ const {
 	formButtons,
 	slider,
 	sliderText,
+	textInput
 } = styles;
 
 function mapStateToProps(state) {

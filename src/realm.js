@@ -26,8 +26,9 @@ const DataSchema = {
 
 const BackendSchema = {
 	name: 'Backend',
-	primaryKey: 'name',
+	primaryKey: 'id',
 	properties: {
+		id: 'string',
 		name: 'string',
 		protocol: 'string',
 		url: 'string',
@@ -48,10 +49,11 @@ const SettingsSchema = {
 // schemaVersion 1 added autoConnect/autoNotify to DeviceSchema
 // schemaVersion 2 added BackendSchema
 // schemaVersion 3 added activeBackend to SettingsSchema
+// schemaVersion 4 added id as BackendSchema primaryKey
 
 let realm = new Realm({
 	schema: [DeviceSchema, DataSchema, SettingsSchema, BackendSchema],
-	schemaVersion: 3,
+	schemaVersion: 4,
 });
 
 realm.write(()=>{

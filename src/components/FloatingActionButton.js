@@ -25,8 +25,16 @@ class FloatingActionButton extends Component {
 
     return (
       <TouchableElement onPress={this.props.onPress}>
-        <View style={[styles.container, {backgroundColor: this.props.color}]}>
-          <Text style={{color:'white', fontSize: this.props.size}}>{this.props.displayText}</Text>
+        <View style={[
+          styles.container, 
+          {
+            backgroundColor: this.props.color,
+            width: this.props.size,
+            height: this.props.size,
+            borderRadius: this.props.size / 2,
+          }
+        ]}>
+          <Text style={{color:'white', fontSize: this.props.fontSize}}>{this.props.displayText}</Text>
         </View>
       </TouchableElement>
     );
@@ -35,15 +43,12 @@ class FloatingActionButton extends Component {
 
 const styles = StyleSheet.create({
   container: {
-    height: 72,
-    width: 72,
     alignItems: 'center',
     justifyContent: 'center',
-    borderRadius: 36,
     backgroundColor: 'navy',
     position: 'absolute',
-    bottom: 8,
-    right: 8,
+    bottom: 20,
+    right: 5,
     ...Platform.select({
       ios: {
         shadowColor: '#FFF',

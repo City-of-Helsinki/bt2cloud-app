@@ -44,28 +44,31 @@ export default {
 		let filepath = dirpath + filename;
 		let writeString = JSON.stringify(jsonObject) + '\r\n';
 
-		fs.mkdir(dirpath);
-		fs.exists(filepath)
-			.then((exists)=> {
-				if (exists) {
-					fs.appendFile(filepath, writeString)
-						.then(()=> {
-							console.log('success appending');
-						})
-						.catch((err)=>{
-							console.log('failure: ', err);
-						});					
-				}
-				else {
-						fs.writeFile(filepath, writeString)
-							.then(()=> {
-								console.log('success writing');
-							})
-							.catch((err)=>{
-								console.log('failure: ', err);
-							});		
-				}
+		fs.mkdir(dirpath)
+			.then(()=>{
+				fs.exists(filepath)
+					.then((exists)=> {
+						if (exists) {
+							fs.appendFile(filepath, writeString)
+								.then(()=> {
+									console.log('success appending');
+								})
+								.catch((err)=>{
+									console.log('failure: ', err);
+								});					
+						}
+						else {
+								fs.writeFile(filepath, writeString)
+									.then(()=> {
+										console.log('success writing');
+									})
+									.catch((err)=>{
+										console.log('failure: ', err);
+									});		
+						}
+					});
 			});
+
 	},
 
 	createZip: () => {
@@ -100,14 +103,19 @@ export default {
 		return new Promise((resolve, reject) => {
 			let sourcePath = fs.ExternalDirectoryPath + '/' + filename;
 			console.log(sourcePath);
-			let targetPath = fs.ExternalDirectoryPath + FILE_SENT_SAVE_PATH + filename;	
-			fs.moveFile(sourcePath, targetPath)
+			let targetFolder = fs.ExternalDirectoryPath + FILE_SENT_SAVE_PATH;
+			fs.mkdir(targetFolder)
 				.then(()=>{
-					resolve();
-				})
-				.catch((err)=>{
-					reject(err);
-				});								
+					let targetPath = targetFolder + filename;	
+					FetchBlob.fs.mv(sourcePath, targetPath)
+						.then(()=>{
+							resolve();
+						})
+						.catch((err)=>{
+							reject(err);
+						});		
+				});
+						
 		});
 	},
 
@@ -128,5 +136,14 @@ export default {
 					reject(err);
 				});
 		});
+	},
+
+	deleteUnsentFolder: () => {
+		fs.readdir(fs.ExternalDirectoryPath + FILE_UNSENT_SAVE_PATH)
+			.then((filenames)=>{
+				filenames.forEach(f=>{
+					FetchBlob.fs.unlink(fs.ExternalDirectoryPath + FILE_UNSENT_SAVE_PATH + '/' + f);
+				});
+			});
 	}
 }

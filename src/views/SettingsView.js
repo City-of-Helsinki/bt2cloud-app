@@ -54,9 +54,11 @@ class SettingsView extends Component {
 
 	sendFile(filenames, totalFiles, remainingFiles, datestring) {
 		if (filenames.length < 1) return;
+		let protocol = this.props.settings.activeBackend.protocol;
+		let url = this.props.settings.activeBackend.url;
 		let request = {
 			type: 'POST',
-			url: this.props.settings.activeBackend.url,
+			url: protocol + '://' + url,
 			headers: {
 				'Content-Type': 'multipart/form-data',
 				'User-Agent': 'Bt2Cloud/v0.1/' + datestring, 
@@ -93,12 +95,13 @@ class SettingsView extends Component {
 		Utils.createZip()
 			.then((data)=> {
 				console.log('Successfully created zip at ' + data.path);
-				Utils.getUnsentZips()
-					.then((filenames)=>{
-						let datestring = moment(new Date()).format('YYYY-MM-DD');
-						files = filenames.slice();
-						this.sendFile(files, files.length, files.length, datestring);
-					});
+				Utils.deleteUnsentFolder();
+					Utils.getUnsentZips()
+						.then((filenames)=>{
+							let datestring = moment(new Date()).format('YYYY-MM-DD');
+							files = filenames.slice();
+							this.sendFile(files, files.length, files.length, datestring);
+						});											
 			})
 			.catch((err)=> {
 				console.log('Error creating zip: ' + err.message);

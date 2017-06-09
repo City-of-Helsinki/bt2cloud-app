@@ -17,6 +17,7 @@ import Switch from 'react-native-switch-pro';
 import BleManager from 'react-native-ble-manager';
 import { connect } from 'react-redux';
 
+import eventHandlers from '../utils/eventHandlers';
 import realm from '../realm';
 import { 
 	bleConnect, 
@@ -106,7 +107,7 @@ class DeviceDetailView extends Component {
 
 	handleSwitch(realm, device, willBeFavorite, willHaveAutoConnect, willHaveAutoNotify) {
 		this.props.bleModifyDevice(realm, device, willBeFavorite, willHaveAutoConnect, willHaveAutoNotify);
-		if (willHaveAutoNotify) this.props.handleAutoNotify(device.id);
+		if (willHaveAutoNotify) eventHandlers.handleAutoNotify.call(eventHandlers, device.id);
 	}
 
 	render() {

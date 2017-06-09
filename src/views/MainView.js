@@ -23,52 +23,15 @@ class MainView extends Component {
 
 	constructor(props) {
 		super(props);
-		this.setGPSTrigger = this.setGPSTrigger.bind(this);
-	}
-
-	componentDidMount(){
-    this.watchID = navigator.geolocation.watchPosition((position) => {
-    	console.log('successfully got watched location', position);
-      this.lastPosition = position.coords;
-    },
-    (error) => {
-    	console.log(error)
-    }, GPS_OPTIONS);
-    
-    this.setGPSTrigger(this.props.settings.GPSInterval);		
-	}
-
-	setGPSTrigger(interval) {
-    this.GPSTrigger = BGTimer.setInterval(()=>{
-    	try {
-    		if (this.lastPosition.latitude) {
-	    		let gps = {
-	    			lat: this.lastPosition.latitude,
-	    			lon: this.lastPosition.longitude,
-	    			acc: this.lastPosition.accuracy.toFixed(3),
-	    			alt: this.lastPosition.altitude,
-	    			time: new Date(),
-	    		}
-	    		Utils.writeToFile(store, gps, FILE_TAG_GPS);
-    		}
-    	}
-    	catch(err) {
-    		console.log('error writing GPS to file', err);
-    	}	      
-    }, interval * 1000);		
 	}
 
 	componentWillReceiveProps(newProps) {
 		if (!newProps.settings || !newProps.settings.GPSInterval) return;
 		
 		if (newProps.settings.GPSInterval !== this.props.settings.GPSInterval) {
-			if (this.GPSTrigger) BGTimer.clearInterval(this.GPSTrigger);
-			this.setGPSTrigger(newProps.settings.GPSInterval);
+			if (GPSTrigger) BGTimer.clearInterval(GPSTrigger);
+			setGPSTrigger(newProps.settings.GPSInterval);
 		}
-	}
-
-	componentWillUnmount() {
-		if (this.watchID) navigator.geolocation.clearWatch(this.watchID);
 	}
 
 	render() {

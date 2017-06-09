@@ -53,7 +53,7 @@ export default {
 							store.dispatch({type: FILESYSTEM_WRITING});
 							fs.appendFile(filepath, writeString)
 								.then(()=> {
-									console.log('writing ' + file_tag + 'done');
+									//console.log('writing ' + file_tag + 'done');
 									store.dispatch({type: FILESYSTEM_WRITING_DONE});
 								})
 								.catch((err)=>{
@@ -65,7 +65,7 @@ export default {
 							store.dispatch({type: FILESYSTEM_WRITING_DONE});
 							fs.writeFile(filepath, writeString)
 								.then(()=> {
-									console.log('writing ' + file_tag + 'done');
+									//console.log('writing ' + file_tag + 'done');
 									store.dispatch({type: FILESYSTEM_WRITING_DONE});
 								})
 								.catch((err)=>{

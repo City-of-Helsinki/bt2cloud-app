@@ -39,6 +39,7 @@ const Handlers = {
 	},
 
 	handleConnectPeripheral(data) {		
+		let that=this;
 		let state = store.getState();
 		store.dispatch(getConnectedPeripherals(BleManager));
 		let deviceID = data.peripheral;
@@ -51,7 +52,7 @@ const Handlers = {
       // Dirty hack. Prevents 2 concurrent retrieveServices native calls
       // Concurrent calls cause promise to never resolve.
       BGTimer.setTimeout(()=>{
-      	this.handleAutoNotify(deviceID);
+      	that.handleAutoNotify(deviceID);
       }, 600);
     }
 	},
@@ -80,7 +81,9 @@ const Handlers = {
 		}
 		
 		store.dispatch(getConnectedPeripherals(BleManager));
-		// this.props.getAvailablePeripherals();
+		let hasAutoConnect = state.ble.knownPeripherals.filter(p=>p.autoC === true & p.id === deviceID);
+
+		if (hasAutoConnect.length !== 0) store.dispatch(bleConnect(BleManager, realm, {id: deviceID}));
 	},
 
 	handleNotification(data) {
@@ -112,6 +115,54 @@ const Handlers = {
 		store.dispatch(getAvailablePeripherals(BleManager));
 		store.dispatch(bleScanEnded());
 	},
+
+	handleAutoConnect(autoConnectPeripherals) {
+		// If device is set to autoConnect in DB, try to connect (unless already connected/connecting)
+		let { peripherals, connectedPeripherals, connectingPeripherals, knownPeripherals} = store.getState().ble;
+
+		autoConnectPeripherals.forEach((per) => {
+			let inRange = peripherals.map(p=>p.id).includes(per.id);
+			let connected = connectedPeripherals.map(p=>p.id).includes(per.id);
+			let connecting = connectingPeripherals.includes(per.id);
+
+			if (inRange && !connected && !connecting) {
+				console.log('attempting to autoconnect');
+				store.dispatch(bleConnecting(per));
+				store.dispatch(bleConnect(BleManager, realm, per));
+			}
+		});
+	},	
+
+	handleAutoNotify(deviceID) {
+		// If device is set to autoNotify in DB, start notify on all notify-able chars
+    console.log('handleAutoNotify ' + deviceID);
+    let state = store.getState();
+    try {
+		BleManager.retrieveServices(deviceID)
+			.then((data)=>{
+				console.log('handleautonotify promise resolves');
+				if (!data.characteristics) return;
+				let notifyableChars = data.characteristics.filter((c)=>{
+					return c.properties.hasOwnProperty('Notify') && c.properties.Notify === 'Notify';
+				});
+
+        // characteristics that are not notifying and their device is connected
+        let charArray = notifyableChars.filter((nc)=> {
+          let notifying = state.ble.notifyingChars.map(c=>c.characteristic).includes(nc.characteristic);
+          let connected = state.ble.connectedPeripherals.map(p=>p.id).includes(deviceID);
+          return !notifying && connected;
+        });
+        let sendCharArray = charArray.slice();
+        if (charArray.length > 0) store.dispatch(bleNotify(BleManager, deviceID, sendCharArray));
+		})
+    .catch((err) => {
+      console.log(err);
+    });
+  	}
+  	catch (err) {
+  		console.log('autonotify error: ', err);
+  	}
+	},	
 }
 
 export default Handlers;

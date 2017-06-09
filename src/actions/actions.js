@@ -23,6 +23,8 @@ import {
   SETTINGS_CHANGE_GPS_INTERVAL,
   SETTINGS_SET_DEVICE_INFO,
   FILE_TAG_DATA,
+  FILESYSTEM_UPLOADING,
+  FILESYSTEM_UPLOADING_DONE,
 } from '../constants';
 
 // START BLE MANAGER ACTIONS
@@ -220,7 +222,7 @@ export function bleAppendReadHistory(deviceID, service, characteristic, data) {
   }
 }
 
-export function bleRead(BleManager, realm, Utils, deviceID, service, characteristic) {
+export function bleRead(store, BleManager, realm, Utils, deviceID, service, characteristic) {
   return (dispatch) => {
     if (!deviceID || !service || !characteristic) return;
     BleManager.read(deviceID, service, characteristic)
@@ -238,8 +240,7 @@ export function bleRead(BleManager, realm, Utils, deviceID, service, characteris
         realm.write(() => {
           realm.create('Data', jsonObject);
         });
-
-        Utils.writeToFile(jsonObject, FILE_TAG_DATA);
+        Utils.writeToFile(store,jsonObject, FILE_TAG_DATA);
         dispatch(bleAppendReadHistory(deviceID, service, characteristic, data));
       })
       .catch((error)=>{

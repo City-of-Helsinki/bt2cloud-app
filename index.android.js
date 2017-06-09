@@ -5,8 +5,8 @@ import {
 
 import BackgroundJob from 'react-native-background-job';
 import { Provider } from 'react-redux';
-import configureStore from './src/configureStore';
 import App from './src/app';
+import store from './src/store';
 
 const foregroundService = false;
 
@@ -26,7 +26,7 @@ if (foregroundService) {
 	BackgroundJob.schedule(backgroundSchedule);
 }
 
-const store = configureStore()
+
 
 const BLE_sovellus = () => (
   <Provider store={store}>

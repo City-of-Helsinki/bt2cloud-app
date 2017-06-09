@@ -10,6 +10,7 @@ import realm from '../realm';
 import ScanView from './ScanView';
 import BackendsView from './BackendsView';
 import SettingsView from './SettingsView';
+import store from '../store';
 import Utils from '../utils/utils';
 import Colors from '../colors';
 
@@ -48,7 +49,7 @@ class MainView extends Component {
 	    			alt: this.lastPosition.altitude,
 	    			time: new Date(),
 	    		}
-	    		Utils.writeToFile(gps, FILE_TAG_GPS);
+	    		Utils.writeToFile(store, gps, FILE_TAG_GPS);
     		}
     	}
     	catch(err) {

@@ -2,10 +2,11 @@ import fs from 'react-native-fs';
 import moment from 'moment';
 import { zip } from 'react-native-zip-archive';
 import FetchBlob from 'react-native-fetch-blob';
-
 import { 
 	FILE_SENT_SAVE_PATH,
 	FILE_UNSENT_SAVE_PATH,
+  FILESYSTEM_WRITING,
+  FILESYSTEM_WRITING_DONE,	
 } from '../constants';
 
 export default {
@@ -36,7 +37,7 @@ export default {
 		return array;
 	},
 
-	writeToFile: (jsonObject, file_tag) => {
+	writeToFile: (store, jsonObject, file_tag) => {
 		if (!file_tag) file_tag ='file';
 		
 		let filename = moment(jsonObject.time).format('YYYY-MM-DD-HH') + '_' + file_tag + '.txt';
@@ -49,33 +50,44 @@ export default {
 				fs.exists(filepath)
 					.then((exists)=> {
 						if (exists) {
+							store.dispatch({type: FILESYSTEM_WRITING});
 							fs.appendFile(filepath, writeString)
 								.then(()=> {
-									console.log('success appending');
+									store.dispatch({type: FILESYSTEM_WRITING_DONE});
 								})
 								.catch((err)=>{
+									store.dispatch({type: FILESYSTEM_WRITING_DONE});
 									console.log('failure: ', err);
 								});					
 						}
 						else {
-								fs.writeFile(filepath, writeString)
-									.then(()=> {
-										console.log('success writing');
-									})
-									.catch((err)=>{
-										console.log('failure: ', err);
-									});		
+							store.dispatch({type: FILESYSTEM_WRITING_DONE});
+							fs.writeFile(filepath, writeString)
+								.then(()=> {
+									store.dispatch({type: FILESYSTEM_WRITING_DONE});
+								})
+								.catch((err)=>{
+									store.dispatch({type: FILESYSTEM_WRITING_DONE});
+									console.log('failure: ', err);
+								});		
 						}
 					});
 			});
 
 	},
 
-	createZip: () => {
+	createZip: (store) => {
 		return new Promise((resolve, reject) => {
 			let filename = moment(new Date()).format('YYYY-MM-DD-HH_mm_ss') + '.zip';
 			let sourcePath = fs.ExternalDirectoryPath + FILE_UNSENT_SAVE_PATH;
 			let targetPath = fs.ExternalDirectoryPath + '/' + filename;
+			let waiting = false;
+			while (store.getState().filesystem.writing) {
+				if (!waiting) {
+					waiting = true;
+					console.log ('waiting for file write to finish...');
+				}
+			}
 			zip(sourcePath, targetPath)
 				.then((path) => {
 					let data = {filename, path}
@@ -129,8 +141,9 @@ export default {
 					{ name: 'file', filename: filename, type: 'archive/zip', data: FetchBlob.wrap(path)},
 					{ name: 'metadata', data: JSON.stringify(metadata)},
 				])
-				.then((res) => {
-					resolve(res.text());
+				.then((res) =>{
+					if (res.respInfo.status === 200 || res.respInfo.status === 201) resolve(res.text());
+					else reject (res.text());
 				})
 				.catch((err) => {
 					reject(err);

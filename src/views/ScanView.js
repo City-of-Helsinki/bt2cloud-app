@@ -44,6 +44,7 @@ import {
 } from '../constants';
 
 import Colors from '../colors';
+import store from '../store';
 import Utils from '../utils/utils';
 import DeviceBox from '../components/DeviceBox';
 
@@ -176,12 +177,8 @@ class ScanView extends Component {
     realm.write(() => {
       realm.create('Data', jsonObject);
     });
-    Utils.writeToFile(jsonObject, FILE_TAG_DATA);
+    Utils.writeToFile(store, jsonObject, FILE_TAG_DATA);
 
-		// prevent UI re-rendering in background
-		if (AppState.currentState === 'active') {
-			this.props.bleAppendReadHistory(deviceID, service, characteristic, hex);
-		}
 	}
 
 	handleScanEnded() {
@@ -228,7 +225,6 @@ class ScanView extends Component {
 		if (!device) return;
 		BleManager.retrieveServices(device.id)
 			.then((s) => {
-				console.log('device: ', s);
 				Actions.DeviceDetailView({
 					title: device.name, 
 					device: s,

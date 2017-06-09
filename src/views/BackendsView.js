@@ -15,13 +15,14 @@ import moment from 'moment';
 import generateUuid from 'react-native-uuid';
 import { connect } from 'react-redux';
 import realm from '../realm';
+import store from '../store';
 import Utils from '../utils/utils';
 import Colors from '../colors';
 import BackendBox from '../components/BackendBox';
 
 import FloatingActionButton from '../components/FloatingActionButton';
 
-import { SETTINGS_REFRESH } from '../constants';
+import { SETTINGS_REFRESH, FILESYSTEM_UPLOADING, FILESYSTEM_UPLOADING_DONE } from '../constants';
 
 const Form = t.form.Form;
 
@@ -177,6 +178,7 @@ class BackendsView extends Component {
 			type: 'POST',
 			url: protocol + '://' + url,
 			headers: {
+				'Accept': 'application/json',
 				'Content-Type': 'multipart/form-data',
 				'User-Agent': 'Bt2Cloud/v0.1/' + datestring, 
 			},
@@ -185,18 +187,21 @@ class BackendsView extends Component {
 				phoneId: this.props.settings.deviceInfo.id,
 			},
 		};
-
+		this.props.uploading();
 		console.log(request);
 		Utils.httpRequest(request)
 			.then((res)=> {
-				console.log(res);
+				console.log(res.status);
 				Utils.moveToSentFolder(filenames[0])
 					.then(()=> {
 						console.log('moved');
 						filenames.splice(0,1);
 						remainingFiles -= 1;
 						if (filenames.length>0) this.sendFile(filenames, totalFiles, remainingFiles, datestring);
-						else Alert.alert('Success', 'Successfully sent ' + (totalFiles-remainingFiles) + '/' + totalFiles + ' zip files');						
+						else {
+							this.props.uploadingDone();
+							Alert.alert('Upload result', 'Successfully sent ' + (totalFiles-remainingFiles) + '/' + totalFiles + ' zip files');						
+						}
 					})
 					.catch((err)=> {
 						console.log(err);
@@ -206,12 +211,15 @@ class BackendsView extends Component {
 				console.log('Error sending to backend: ' + err);
 				filenames.splice(0,1);
 				if (filenames.length>0) this.sendFile(filenames, totalFiles, remainingFiles, datestring);
-				else Alert.alert('Success', 'Successfully sent ' + (totalFiles-remainingFiles) + '/' + totalFiles + ' zip files');
+				else {
+					this.props.uploadingDone();
+					Alert.alert('Upload result', 'Successfully sent ' + (totalFiles-remainingFiles) + '/' + totalFiles + ' zip files');
+				}
 			});
 	}
 
 	handleSendPress() {
-		Utils.createZip()
+		Utils.createZip(store)
 			.then((data)=> {
 				console.log('Successfully created zip at ' + data.path);
 				Utils.deleteUnsentFolder();
@@ -253,7 +261,7 @@ class BackendsView extends Component {
 
 		let { editView, backends } = this.state;
 		console.log('editview is ' + editView);
-		console.log(this.props.settings);
+		console.log('uploading: ' + this.props.isUploading);
 		return (
 			<View style={container}>
 				{editView && <ScrollView>
@@ -284,8 +292,12 @@ class BackendsView extends Component {
 						{renderBackends(backends)}
 						</View>
 					</ScrollView>
-					<TouchableHighlight style={largeButton} onPress={this.handleSendPress}>
-						<Text style={buttonTextSmaller}>Send BLE/GPS data to backend</Text>
+					<TouchableHighlight 
+						style={this.props.isUploading ? [largeButton, disabled] : largeButton} 
+						onPress={this.props.isUploading ? ()=>null : this.handleSendPress}>
+						<Text style={buttonTextSmaller}>
+							{this.props.isUploading ? 'Sending...' : 'Send BLE/GPS data to backend'}
+						</Text>
 					</TouchableHighlight>					
 				</View>
 				}
@@ -333,6 +345,9 @@ styles = StyleSheet.create({
 		backgroundColor: Colors.BLUE,
 		alignSelf: 'center',
 	},	
+	disabled: {
+		backgroundColor: Colors.GREY,
+	},
 	buttonText: {
 		color: 'white',
 		fontSize: 20,
@@ -396,17 +411,21 @@ const {
 	formButtons,
 	backendBox,
 	activeBackendBox,
+	disabled,
 } = styles;
 
 function mapStateToProps(state) {
   return {
   	settings: state.settings,
+  	isUploading: state.filesystem.uploading,
   };
 }
 
 function mapDispatchToProps(dispatch) {
   return {
   	refreshSettings: () => dispatch({type: SETTINGS_REFRESH}),
+  	uploading: () => dispatch({type: FILESYSTEM_UPLOADING}),
+  	uploadingDone: () => dispatch({type: FILESYSTEM_UPLOADING_DONE}),
   };
 }
 

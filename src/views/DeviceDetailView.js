@@ -27,6 +27,7 @@ import {
 	bleNotifyStop,
 	bleModifyDevice,
 } from '../actions/actions';
+import store from '../store';
 import Utils from '../utils/utils';
 import Colors from '../colors';
 import ServiceBox from '../components/ServiceBox';
@@ -50,7 +51,7 @@ class DeviceDetailView extends Component {
 		let { device } = this.props;
 		let connected = this.props.ble.connectedPeripherals.map(p=>p.id).includes(device.id);
 		if (!connected) return;
-		this.props.bleRead(BleManager, realm, Utils, device.id, service, characteristic);
+		this.props.bleRead(store, BleManager, realm, Utils, device.id, service, characteristic);
 	}
 
 	handleNotifyPress(service, characteristic, hasAutoNotify) {
@@ -329,8 +330,8 @@ function mapDispatchToProps(dispatch) {
     bleConnect: (BleManager, realm, device) => dispatch(bleConnect(BleManager, realm, device)),
     bleConnecting: (device) => dispatch(bleConnecting(device)),
     bleDisconnect: (BleManager, device) => dispatch(bleDisconnect(BleManager, device)),
-    bleRead: (BleManager, realm, Utils, deviceID, service, characteristic) => 
-    	dispatch(bleRead(BleManager, realm, Utils, deviceID, service, characteristic)),
+    bleRead: (store, BleManager, realm, Utils, deviceID, service, characteristic) => 
+    	dispatch(bleRead(store, BleManager, realm, Utils, deviceID, service, characteristic)),
     bleNotify: (BleManager, deviceID, charArray) => 
     	dispatch(bleNotify(BleManager, deviceID, charArray)),
     bleNotifyStop: (BleManager, deviceID, charArray) => 

@@ -43,6 +43,8 @@ import {
 	FILE_TAG_DATA
 } from '../constants';
 
+import eventHandlers from '../utils/eventHandlers';
+
 import Colors from '../colors';
 import store from '../store';
 import Utils from '../utils/utils';
@@ -59,16 +61,17 @@ class ScanView extends Component {
 		this.handleNotification = this.handleNotification.bind(this);
 		this.handleAutoConnect = this.handleAutoConnect.bind(this);
 		this.handleAutoNotify = this.handleAutoNotify.bind(this);
+
 		this.scanEndedListener = NativeAppEventEmitter
-			.addListener('BleManagerStopScan', this.handleScanEnded);
+			.addListener('BleManagerStopScan', eventHandlers.handleScanEnded);
 		this.discoverPeripheralListener = NativeAppEventEmitter
-			.addListener('BleManagerDiscoverPeripheral', this.handleDiscoverPeripheral);
+			.addListener('BleManagerDiscoverPeripheral', eventHandlers.handleDiscoverPeripheral);
 		this.connectPeripheralListener = NativeAppEventEmitter
-			.addListener('BleManagerConnectPeripheral', this.handleConnectPeripheral);
+			.addListener('BleManagerConnectPeripheral', eventHandlers.handleConnectPeripheral);
 		this.disconnectPeripheralListener = NativeAppEventEmitter
-			.addListener('BleManagerDisconnectPeripheral', this.handleDisconnectPeripheral);		
+			.addListener('BleManagerDisconnectPeripheral', eventHandlers.handleDisconnectPeripheral);		
 		this.notificationListener = NativeAppEventEmitter
-			.addListener('BleManagerDidUpdateValueForCharacteristic', this.handleNotification);		
+			.addListener('BleManagerDidUpdateValueForCharacteristic', eventHandlers.handleNotification);		
 	}
 
 	componentDidMount() {

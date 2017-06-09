@@ -53,6 +53,7 @@ export default {
 							store.dispatch({type: FILESYSTEM_WRITING});
 							fs.appendFile(filepath, writeString)
 								.then(()=> {
+									console.log('writing ' + file_tag + 'done');
 									store.dispatch({type: FILESYSTEM_WRITING_DONE});
 								})
 								.catch((err)=>{
@@ -64,6 +65,7 @@ export default {
 							store.dispatch({type: FILESYSTEM_WRITING_DONE});
 							fs.writeFile(filepath, writeString)
 								.then(()=> {
+									console.log('writing ' + file_tag + 'done');
 									store.dispatch({type: FILESYSTEM_WRITING_DONE});
 								})
 								.catch((err)=>{
@@ -136,7 +138,6 @@ export default {
 			let { type, url, headers, filename, metadata } = request;
 			let path = fs.ExternalDirectoryPath + '/' + filename;
 			console.log(path);
-			url = url.replace(/(^\w+:|^)\/\//, ''); // remove protocols if user entered them
 			FetchBlob.fetch(type, url, headers, 
 				[
 					{ name: 'file', filename: filename, type: 'archive/zip', data: FetchBlob.wrap(path)},

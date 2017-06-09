@@ -188,7 +188,6 @@ class DeviceDetailView extends Component {
 									let valueCount = realm.objects('Data')
 										.filtered('characteristic == "' + c.characteristic +'"').length;
 									let notifying = notifyingChars.map(ch=>ch.characteristic).includes(c.characteristic);
-									console.log(c);
 									return (
 										<CharBox
 											key={c.characteristic}
@@ -321,7 +320,8 @@ const {
 
 function mapStateToProps(state) {
   return {
-    ble: state.ble
+    ble: state.ble,
+    notification: state.notification,
   };
 }
 

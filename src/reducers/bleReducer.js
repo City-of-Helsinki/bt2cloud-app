@@ -13,7 +13,6 @@ import {
   BLE_UPDATE_KNOWN_PERIPHERALS,
   BLE_READ,
   BLE_READ_ERROR,
-  BLE_APPEND_READ_HISTORY,
   BLE_NOTIFY,
   BLE_NOTIFY_ERROR,  
   BLE_NOTIFY_STARTED,
@@ -156,13 +155,6 @@ export default function bleReducer (state = initialState, action) {
         ...state,
         readError: action.error,
       }
-
-    case BLE_APPEND_READ_HISTORY:  
-      readHistory = [];
-    return {
-      ...state,
-      readHistory,
-    }
 
     case BLE_NOTIFY_ERROR:
       return {

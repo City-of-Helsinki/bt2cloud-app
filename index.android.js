@@ -1,6 +1,7 @@
 import React from 'react';
 import {
   AppRegistry,
+  NativeAppEventEmitter,
 } from 'react-native';
 
 import BackgroundJob from 'react-native-background-job';
@@ -8,7 +9,22 @@ import { Provider } from 'react-redux';
 import App from './src/app';
 import store from './src/store';
 
-const foregroundService = false;
+import eventHandlers from './src/utils/eventHandlers';
+
+NativeAppEventEmitter
+			.addListener('BleManagerStopScan', eventHandlers.handleScanEnded);
+NativeAppEventEmitter
+			.addListener('BleManagerDiscoverPeripheral', eventHandlers.handleDiscoverPeripheral);
+NativeAppEventEmitter
+			.addListener('BleManagerConnectPeripheral', eventHandlers.handleConnectPeripheral);
+NativeAppEventEmitter
+			.addListener('BleManagerDisconnectPeripheral', eventHandlers.handleDisconnectPeripheral);		
+NativeAppEventEmitter
+			.addListener('BleManagerDidUpdateValueForCharacteristic', eventHandlers.handleNotification);	
+
+
+
+const foregroundService = true;
 
 if (foregroundService) {
 	const backgroundJob = {
@@ -25,6 +41,8 @@ if (foregroundService) {
 	BackgroundJob.register(backgroundJob);
 	BackgroundJob.schedule(backgroundSchedule);
 }
+
+
 
 
 

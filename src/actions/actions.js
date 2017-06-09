@@ -215,10 +215,6 @@ export function bleReadError(deviceID, service, characteristic, error) {
 export function bleAppendReadHistory(deviceID, service, characteristic, data) {
   return {
     type: BLE_APPEND_READ_HISTORY,
-    deviceID,
-    service,
-    characteristic,
-    data,
   }
 }
 

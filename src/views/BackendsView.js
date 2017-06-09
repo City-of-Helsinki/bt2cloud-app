@@ -174,6 +174,7 @@ class BackendsView extends Component {
 		if (filenames.length < 1) return;
 		let protocol = this.props.settings.activeBackend.protocol;
 		let url = this.props.settings.activeBackend.url;
+		url = url.replace(/(^\w+:|^)\/\//, ''); // remove protocols if user entered them		
 		let request = {
 			type: 'POST',
 			url: protocol + '://' + url,

@@ -17,6 +17,7 @@ import {
   BLE_NOTIFY_ERROR,
   BLE_NOTIFY_STARTED,
   BLE_NOTIFY_STOPPED,
+  BLE_AUTONOTIFY_STARTING,
   BLE_FAVORITE_ADD,
   BLE_FAVORITE_REMOVE,
   SETTINGS_CHANGE_FLUSH_TO_DISK,
@@ -64,7 +65,7 @@ export function bleScanStartResult(error) {
 export function bleScanStart(BleManager) {
   return (dispatch) => {
     dispatch({type: BLE_SCAN_STARTING});
-    BleManager.scan([], 60)
+    BleManager.scan([], 4)
       .then(() => {
         dispatch(bleScanStartResult());
       })
@@ -89,10 +90,13 @@ export function bleScanStop(BleManager) {
 
 // SCAN ENDED
 export function bleScanEnded(autoRestartScan=true) {
-  return {
-    type: BLE_SCAN_ENDED,
-    startScanByDefault: autoRestartScan,
-  }
+  return (dispatch) => {
+    if (autoRestartScan) dispatch(bleScanStart);
+    else return {
+      type: BLE_SCAN_ENDED,
+      startScanByDefault: false,
+    }
+  };
 }
 
 // CONNECT/DISCONNECT ERROR
@@ -115,6 +119,7 @@ export function bleConnecting(device) {
 
 export function bleConnect(BleManager, realm, device) {
   return (dispatch) => {
+    console.log('bleConnect');
     BleManager.connect(device.id)
       .then(()=>{
         BleManager.retrieveServices(device.id)
@@ -301,6 +306,20 @@ export function bleNotifyStop(BleManager, deviceID, charArray) {
         console.log(error);
       });
   }
+}
+
+export function bleAutoNotifyStarting(deviceID) {
+  return {
+    type: BLE_AUTONOTIFY_STARTING,
+    id: deviceID,
+  };
+}
+
+export function bleAutoNotifyStarted(deviceID) {
+  return {
+    type: BLE_AUTONOTIFY_STARTED,
+    id: deviceID,
+  };
 }
 
 export function bleModifyDevice(realm, device, favorite, autoConnect, autoNotify) {

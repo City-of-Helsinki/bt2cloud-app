@@ -17,6 +17,8 @@ import {
   BLE_NOTIFY_ERROR,  
   BLE_NOTIFY_STARTED,
   BLE_NOTIFY_STOPPED,
+  BLE_AUTONOTIFY_STARTING,
+  BLE_AUTONOTIFY_STARTED,
 } from '../constants';
 const initialState = {
   started: false,

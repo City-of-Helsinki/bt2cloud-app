@@ -3,7 +3,7 @@ import BleManager from 'react-native-ble-manager';
 import BGTimer from 'react-native-background-timer';
 import realm from '../realm';
 import Toast from '@remobile/react-native-toast';
-import { AppState } from 'react-native';
+import { AppState, Vibration } from 'react-native';
 import store from '../store';
 
 import { FILE_TAG_DATA } from '../constants';
@@ -48,9 +48,11 @@ const Handlers = {
 		}
 		console.log('Connected to ' + deviceID);
     let hasAutoNotify = state.ble.knownPeripherals.filter(p=>p.autoNotify === true & p.id === deviceID);
-    if (hasAutoNotify.length !== 0) {
+    if (hasAutoNotify.length !== 0 && !state.ble.startingAutoNotify) {
       // Dirty hack. Prevents 2 concurrent retrieveServices native calls
       // Concurrent calls cause promise to never resolve.
+
+      // store.dispatch(bleAutoNotifyStarting(deviceID));
       BGTimer.setTimeout(()=>{
       	that.handleAutoNotify(deviceID);
       }, 600);
@@ -81,9 +83,12 @@ const Handlers = {
 		}
 		
 		store.dispatch(getConnectedPeripherals(BleManager));
-		let hasAutoConnect = state.ble.knownPeripherals.filter(p=>p.autoC === true & p.id === deviceID);
+		let hasAutoConnect = store.getState().ble.knownPeripherals.filter(p=>p.autoConnect === true & p.id === deviceID);
 
-		if (hasAutoConnect.length !== 0) store.dispatch(bleConnect(BleManager, realm, {id: deviceID}));
+		if (hasAutoConnect.length !== 0 && !store.getState().ble.connecting) {
+			store.dispatch(bleConnecting({id: deviceID}));
+			store.dispatch(bleConnect(BleManager, realm, {id: deviceID}));
+		}
 	},
 
 	handleNotification(data) {
@@ -113,7 +118,7 @@ const Handlers = {
 
 	handleScanEnded() {
 		store.dispatch(getAvailablePeripherals(BleManager));
-		store.dispatch(bleScanEnded());
+		store.dispatch(bleScanEnded(store.getState().ble.startScanByDefault));
 	},
 
 	handleAutoConnect(autoConnectPeripherals) {

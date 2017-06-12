@@ -59,28 +59,26 @@ class ScanView extends Component {
 
 	componentDidMount() {	
 		if (!this.props.ble.started && !this.props.ble.starting) this.props.bleStart(BleManager);
-		/*try {
-			console.log('getting connected peripherals');
+		try {
 			this.props.getConnectedPeripherals(BleManager);
 			this.props.getAvailablePeripherals(BleManager);
 		}
 		catch(err) {
 			console.log('not initialized. this is fine.');
-		}*/
-
+		}
+		// if service started and startScanByDefault is true, start scan immediately
+		if (this.props.ble.started && !this.props.ble.scanStarting && !this.props.ble.scanning
+			&& this.props.ble.startScanByDefault) {
+			this.props.bleScanStart(BleManager);
+			this.props.getConnectedPeripherals(BleManager);
+		}	
 	}
 
 	componentDidUpdate() {
     // handle auto connect and notify whenever applicable
     let autoConnectPeripherals = this.props.ble.knownPeripherals.filter(p=>p.autoConnect === true);
     eventHandlers.handleAutoConnect.call(eventHandlers, autoConnectPeripherals);
-		
-		// if service started and startScanByDefault is true, start scan immediately
-		if (this.props.ble.started && !this.props.ble.scanStarting && !this.props.ble.scanning
-			&& this.props.ble.startScanByDefault) {
-			this.props.bleScanStart(BleManager);
-			this.props.getConnectedPeripherals(BleManager);
-		}		
+			
 	}
 
 	handleScanPress() {

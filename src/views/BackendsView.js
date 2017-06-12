@@ -31,16 +31,27 @@ const Protocol = t.enums({
 	https: 'https://',
 }, 'Protocol');
 
+const BasicAuth = t.struct({
+	username: t.maybe(t.String),
+	password: t.maybe(t.String),
+});
+
+const BothNeeded = t.refinement(BasicAuth, function(b) {
+	return b.username != null && b.password != null || b.username == null && b.password == null;
+});
+
 const Backend = t.struct({
 	name: t.String,
 	protocol: Protocol,
 	url: t.String,
+	basicAuth: BothNeeded,
 });
 
 const options = {
 	fields: {
 		name: {
 			help: 'e.g. My Backend',
+			error: 'Please enter a name',
 		},
 		protocol: {
 			placeholder: 'Protocol',
@@ -48,8 +59,19 @@ const options = {
 		},
 		url: {
 			label: 'URL',
-			help: 'e.g. api.mysite.com/endpoint/'
-		}
+			help: 'e.g. api.mysite.com/endpoint/',
+			error: 'Please enter a URL',
+		},
+		basicAuth: {
+			error: 'Provide both user&pass or neither!',
+			help: 'Optional. Set both or neither.',
+			username: {
+				label: 'Username',
+			},
+			password: {
+				label: 'Password',
+			},	
+		},	
 	},
 };
 
@@ -96,13 +118,15 @@ class BackendsView extends Component {
 		console.log(formInput);
 		if (formInput) {
 			this.setState({formValue: {protocol: 'https'}, editView: false});
-			let { name, protocol, url } = formInput;
+			let { name, protocol, url, basicAuth } = formInput;
 			realm.write(()=>{
 				let backend = realm.create('Backend', {
 					id: uuid,	
 					name,
 					protocol,
 					url,
+					username: basicAuth.username,
+					password: basicAuth.password,
 				}, true);
 			});
 			this.setState({backends: Utils.convertRealmResultsToArray(realm.objects('Backend'))});
@@ -154,6 +178,10 @@ class BackendsView extends Component {
 					name: backendObject.name,
 					protocol: backendObject.protocol,
 					url: backendObject.url,
+					basicAuth: {
+						username: backendObject.username,
+						password: backendObject.password,
+					},
 				},
 			})
 	}

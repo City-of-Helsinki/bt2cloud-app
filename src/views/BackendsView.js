@@ -347,7 +347,7 @@ class BackendsView extends Component {
 					<TouchableHighlight 
 						style={this.props.isUploading || !this.props.settings.activeBackend ? 
 							[largeButton, disabled] : largeButton} 
-						onPress={this.props.isUploading || this.props.settings.activeBackend ? 
+						onPress={this.props.isUploading || !this.props.settings.activeBackend ? 
 							()=>null : this.handleSendPress}>
 						<Text style={buttonTextSmaller}>
 							{this.props.isUploading ? 'Sending...' : 'Send BLE/GPS data to backend'}

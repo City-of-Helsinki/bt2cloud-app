@@ -1,5 +1,6 @@
 import fs from 'react-native-fs';
 import moment from 'moment';
+import Buf from 'buffer';
 import { zip } from 'react-native-zip-archive';
 import FetchBlob from 'react-native-fetch-blob';
 import { 
@@ -53,6 +54,7 @@ export default {
 							store.dispatch({type: FILESYSTEM_WRITING});
 							fs.appendFile(filepath, writeString)
 								.then(()=> {
+									//console.log('writing ' + file_tag + 'done');
 									store.dispatch({type: FILESYSTEM_WRITING_DONE});
 								})
 								.catch((err)=>{
@@ -64,6 +66,7 @@ export default {
 							store.dispatch({type: FILESYSTEM_WRITING_DONE});
 							fs.writeFile(filepath, writeString)
 								.then(()=> {
+									//console.log('writing ' + file_tag + 'done');
 									store.dispatch({type: FILESYSTEM_WRITING_DONE});
 								})
 								.catch((err)=>{
@@ -78,9 +81,16 @@ export default {
 
 	createZip: (store) => {
 		return new Promise((resolve, reject) => {
-			let filename = moment(new Date()).format('YYYY-MM-DD-HH_mm_ss') + '.zip';
+			let filename = moment(new Date()).format('YYYY-MM-DD-HH_mm_ss') + '.zip';			
 			let sourcePath = fs.ExternalDirectoryPath + FILE_UNSENT_SAVE_PATH;
 			let targetPath = fs.ExternalDirectoryPath + '/' + filename;
+
+			fs.readdir(sourcePath)
+				.then((files) =>{
+					if (files.length < 1) reject('No BLE/GPS data to send.');
+			});
+
+
 			let waiting = false;
 			while (store.getState().filesystem.writing) {
 				if (!waiting) {
@@ -158,5 +168,9 @@ export default {
 					FetchBlob.fs.unlink(fs.ExternalDirectoryPath + FILE_UNSENT_SAVE_PATH + '/' + f);
 				});
 			});
-	}
+	},
+
+  btoa: (str) => {
+    return new Buf.Buffer(str.toString(), 'binary').toString('base64');
+  },
 }

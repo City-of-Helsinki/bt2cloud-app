@@ -16,7 +16,7 @@ const CharBox = (props) => {
 				<View style={innerContainer}>
 					<View style={contentContainer}>
 					<Text style={biggerText}>
-						Purpose: {props.purpose}
+						Description: {props.purpose}
 					</Text>
 					</View>
 					{props.notify && 
@@ -42,7 +42,7 @@ const CharBox = (props) => {
 								Newest value:
 							</Text>							
 							<Text style={biggerText}>
-								Time: {moment(props.newestValue.time).format('YYYY-MM-DD @ hh:mm:ss')}
+								Time: {moment(props.newestValue.time).format('YYYY-MM-DD @ HH:mm:ss')}
 							</Text>						
 							<Text style={biggerText}>
 								Value: {props.newestValue.ascii}

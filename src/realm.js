@@ -32,6 +32,8 @@ const BackendSchema = {
 		name: 'string',
 		protocol: 'string',
 		url: 'string',
+		username: {type: 'string', optional: true}, // basic auth
+		password: {type: 'string', optional: true},
 	},
 };
 
@@ -50,10 +52,11 @@ const SettingsSchema = {
 // schemaVersion 2 added BackendSchema
 // schemaVersion 3 added activeBackend to SettingsSchema
 // schemaVersion 4 added id as BackendSchema primaryKey
+// schemaVersion 5 added basic auth username&password
 
 let realm = new Realm({
 	schema: [DeviceSchema, DataSchema, SettingsSchema, BackendSchema],
-	schemaVersion: 4,
+	schemaVersion: 5,
 });
 
 realm.write(()=>{

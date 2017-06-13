@@ -17,6 +17,7 @@ import {
   BLE_NOTIFY_ERROR,
   BLE_NOTIFY_STARTED,
   BLE_NOTIFY_STOPPED,
+  BLE_AUTONOTIFY_STARTING,
   BLE_FAVORITE_ADD,
   BLE_FAVORITE_REMOVE,
   SETTINGS_CHANGE_FLUSH_TO_DISK,
@@ -27,6 +28,7 @@ import {
   FILESYSTEM_UPLOADING_DONE,
 } from '../constants';
 
+import BGTimer from 'react-native-background-timer';
 // START BLE MANAGER ACTIONS
 
 export function bleStartResult(error) {
@@ -64,7 +66,8 @@ export function bleScanStartResult(error) {
 export function bleScanStart(BleManager) {
   return (dispatch) => {
     dispatch({type: BLE_SCAN_STARTING});
-    BleManager.scan([], 60)
+    console.log('SCAN STARTING');
+    BleManager.scan([], 4)
       .then(() => {
         dispatch(bleScanStartResult());
       })
@@ -79,7 +82,8 @@ export function bleScanStop(BleManager) {
   return (dispatch) => {
     BleManager.stopScan()
       .then(() => {
-        dispatch(bleScanEnded(false));
+        console.log('scanStopped');
+        dispatch(bleScanEnded(BleManager, false));
       })
       .catch((err) => {
         console.log('scan end error');
@@ -88,11 +92,19 @@ export function bleScanStop(BleManager) {
 }
 
 // SCAN ENDED
-export function bleScanEnded(autoRestartScan=true) {
-  return {
-    type: BLE_SCAN_ENDED,
-    startScanByDefault: autoRestartScan,
-  }
+export function bleScanEnded(BleManager, autoRestartScan=true) {
+  return (dispatch) => {
+    console.log('autorestartscan is ' +autoRestartScan);
+    dispatch(getAvailablePeripherals(BleManager));
+    if (autoRestartScan) {
+      // timeout prevents concurrentModificationException in native code
+      BGTimer.setTimeout(()=>dispatch(bleScanStart(BleManager)), 300);
+    }
+    else dispatch({
+      type: BLE_SCAN_ENDED,
+      startScanByDefault: false,
+    });
+  };
 }
 
 // CONNECT/DISCONNECT ERROR
@@ -113,8 +125,9 @@ export function bleConnecting(device) {
   }
 }
 
-export function bleConnect(BleManager, realm, device) {
+export function bleConnect(BleManager, realm, device, hasAutoConnect) {
   return (dispatch) => {
+    console.log('bleConnect');
     BleManager.connect(device.id)
       .then(()=>{
         BleManager.retrieveServices(device.id)
@@ -136,6 +149,10 @@ export function bleConnect(BleManager, realm, device) {
       })
       .catch((err) => {
         dispatch(bleConnectError(device, err));
+        /*if (hasAutoConnect) {
+          dispatch(bleConnecting(device));
+          dispatch(bleConnect(BleManager, realm, device, hasAutoConnect));
+        }*/ 
       })
   }
 }
@@ -155,6 +172,7 @@ export function bleDisconnect(BleManager, device) {
 // REFRESH AVAILABLE PERIPHERALS
 export function getAvailablePeripherals(BleManager) {
   return (dispatch) => {
+    console.log('getAvailablePeripherals');
     BleManager.getDiscoveredPeripherals([])
       .then((peripherals) => {
         dispatch(bleUpdateAvailablePeripherals(null, peripherals));
@@ -215,10 +233,6 @@ export function bleReadError(deviceID, service, characteristic, error) {
 export function bleAppendReadHistory(deviceID, service, characteristic, data) {
   return {
     type: BLE_APPEND_READ_HISTORY,
-    deviceID,
-    service,
-    characteristic,
-    data,
   }
 }
 
@@ -305,6 +319,20 @@ export function bleNotifyStop(BleManager, deviceID, charArray) {
         console.log(error);
       });
   }
+}
+
+export function bleAutoNotifyStarting(deviceID) {
+  return {
+    type: BLE_AUTONOTIFY_STARTING,
+    id: deviceID,
+  };
+}
+
+export function bleAutoNotifyStarted(deviceID) {
+  return {
+    type: BLE_AUTONOTIFY_STARTED,
+    id: deviceID,
+  };
 }
 
 export function bleModifyDevice(realm, device, favorite, autoConnect, autoNotify) {

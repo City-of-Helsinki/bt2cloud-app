@@ -13,11 +13,12 @@ import {
   BLE_UPDATE_KNOWN_PERIPHERALS,
   BLE_READ,
   BLE_READ_ERROR,
-  BLE_APPEND_READ_HISTORY,
   BLE_NOTIFY,
   BLE_NOTIFY_ERROR,  
   BLE_NOTIFY_STARTED,
   BLE_NOTIFY_STOPPED,
+  BLE_AUTONOTIFY_STARTING,
+  BLE_AUTONOTIFY_STARTED,
 } from '../constants';
 const initialState = {
   started: false,
@@ -69,16 +70,17 @@ export default function bleReducer (state = initialState, action) {
     case BLE_SCAN_START: 
       console.log('BLE_SCAN_START');
       // clear devices from state except those that are connected
-      peripherals = state.connectedPeripherals.slice();
+      // peripherals = state.connectedPeripherals.slice();
       return {
         ...state,
         scanning: action.scanning,
         scanStarting: false,
-        peripherals, 
+        startScanByDefault: action.startScanByDefault,
         scanError: action.error ? action.error : null
       };
 
     case BLE_SCAN_ENDED: 
+      console.log('BLE_SCAN_ENDED');
       return {
         ...state,
         scanning: false,
@@ -156,13 +158,6 @@ export default function bleReducer (state = initialState, action) {
         ...state,
         readError: action.error,
       }
-
-    case BLE_APPEND_READ_HISTORY:  
-      readHistory = [];
-    return {
-      ...state,
-      readHistory,
-    }
 
     case BLE_NOTIFY_ERROR:
       return {

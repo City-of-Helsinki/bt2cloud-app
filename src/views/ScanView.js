@@ -43,6 +43,8 @@ import {
 	FILE_TAG_DATA
 } from '../constants';
 
+import eventHandlers from '../utils/eventHandlers';
+
 import Colors from '../colors';
 import store from '../store';
 import Utils from '../utils/utils';
@@ -52,142 +54,35 @@ class ScanView extends Component {
 
 	constructor(props) {
 		super(props);
-		this.handleDiscoverPeripheral = this.handleDiscoverPeripheral.bind(this);
-		this.handleScanEnded = this.handleScanEnded.bind(this);
-		this.handleConnectPeripheral = this.handleConnectPeripheral.bind(this);
-		this.handleDisconnectPeripheral = this.handleDisconnectPeripheral.bind(this);
-		this.handleNotification = this.handleNotification.bind(this);
-		this.handleAutoConnect = this.handleAutoConnect.bind(this);
-		this.handleAutoNotify = this.handleAutoNotify.bind(this);
-		this.scanEndedListener = NativeAppEventEmitter
-			.addListener('BleManagerStopScan', this.handleScanEnded);
-		this.discoverPeripheralListener = NativeAppEventEmitter
-			.addListener('BleManagerDiscoverPeripheral', this.handleDiscoverPeripheral);
-		this.connectPeripheralListener = NativeAppEventEmitter
-			.addListener('BleManagerConnectPeripheral', this.handleConnectPeripheral);
-		this.disconnectPeripheralListener = NativeAppEventEmitter
-			.addListener('BleManagerDisconnectPeripheral', this.handleDisconnectPeripheral);		
-		this.notificationListener = NativeAppEventEmitter
-			.addListener('BleManagerDidUpdateValueForCharacteristic', this.handleNotification);		
+
 	}
 
-	componentDidMount() {
+	componentDidMount() {	
 		if (!this.props.ble.started && !this.props.ble.starting) this.props.bleStart(BleManager);
-		/*try {
-			console.log('getting connected peripherals');
+		try {
 			this.props.getConnectedPeripherals(BleManager);
 			this.props.getAvailablePeripherals(BleManager);
 		}
 		catch(err) {
 			console.log('not initialized. this is fine.');
-		}*/
-
-	}
-
-	componentWillUnmount() {
-		this.scanEndedListener.remove();
-		this.discoverPeripheralListener.remove();
-		this.connectPeripheralListener.remove();
-		this.disconnectPeripheralListener.remove();
-		this.notificationListener.remove();
+		}
+		// if service started and startScanByDefault is true, start scan immediately
 	}
 
 	componentDidUpdate() {
     // handle auto connect and notify whenever applicable
     let autoConnectPeripherals = this.props.ble.knownPeripherals.filter(p=>p.autoConnect === true);
-    this.handleAutoConnect(autoConnectPeripherals);
 		
-		// if service started and startScanByDefault is true, start scan immediately
 		if (this.props.ble.started && !this.props.ble.scanStarting && !this.props.ble.scanning
 			&& this.props.ble.startScanByDefault) {
 			this.props.bleScanStart(BleManager);
 			this.props.getConnectedPeripherals(BleManager);
-		}		
-	}
-
-	// this gets called multiple times per device upon discovery
-	// cannot be prevented on android
-	handleDiscoverPeripheral(peripheral) {
-
-		// parse legible text from here
-		// let base64Array = new Buffer(peripheral.advertising.data, 'base64').toString('ascii').split('');
-		if (!this.props.ble.peripherals.map(p=>p.id).includes(peripheral.id)) {
-			this.props.bleUpdateAvailablePeripherals(peripheral, null);
-		}
-	}
-
-	handleConnectPeripheral(data) {		
-		this.props.getConnectedPeripherals(BleManager);
-		let deviceID = data.peripheral;
-		if (AppState.currentState === 'active') {
-			Toast.showShortCenter('Connected to ' + deviceID);		
-		}
-		console.log('Connected to ' + deviceID);
-    let hasAutoNotify = this.props.ble.knownPeripherals.filter(p=>p.autoNotify === true & p.id === deviceID);
-    if (hasAutoNotify.length !== 0) {
-      // Dirty hack. Prevents 2 concurrent retrieveServices native calls
-      // Concurrent calls cause promise to never resolve.
-      BGTimer.setTimeout(()=>{
-      	this.handleAutoNotify(deviceID);
-      }, 600);
-    }
-	}
-
-	handleDisconnectPeripheral(data) {
-		if (!data) return;
-		if (!data.hasOwnProperty('peripheral')) return;
-		let deviceID = data.peripheral;
-		let { notifyingChars, peripheralServiceData } = this.props.ble;
-
-		if (AppState.currentState === 'active') {
-			Toast.showShortCenter('Disconnected from ' + deviceID);
-		}
-		else {
-			Vibration.vibrate();
-		}
-		
-
-		if (peripheralServiceData && peripheralServiceData.length > 0) {
-
-			// TODO REMOVE ALL NOTIFYING CHARS FROM STATE ON DISCONNECT
-			let disconnectedDevicesChars = notifyingChars.filter(c=>c.deviceID === deviceID)
-				.map(ch=>ch.characteristic);
-			disconnectedDevicesChars.forEach(dc => this.props.bleNotifyStopped(dc));
-		}
-		
-		this.props.getConnectedPeripherals(BleManager);
-		// this.props.getAvailablePeripherals();
-	}
-
-	handleNotification(data) {
-		if (!data) return;
-		let deviceID = data.peripheral;
-		let characteristic = data.characteristic
-		let service = data.service
-		let hex = Array.isArray(data.value) ? '' : data.value;
-		let ascii = Array.isArray(data.value) ? Utils.byteToText(data.value) : Utils.hexDecode(data.value);
-    let jsonObject = {
-      deviceID,
-      service,
-      characteristic,
-      hex,
-      ascii,
-      time: new Date(),
-    };
-    realm.write(() => {
-      realm.create('Data', jsonObject);
-    });
-    Utils.writeToFile(store, jsonObject, FILE_TAG_DATA);
-
-	}
-
-	handleScanEnded() {
-		this.props.getAvailablePeripherals(BleManager);
-		this.props.bleScanEnded();
+		}				
 	}
 
 	handleScanPress() {
 		let { scanning } = this.props.ble;
+		console.log('scan button press, current scanning status: ' + scanning);
 		if (scanning) {
 			this.props.bleScanStop(BleManager); 
 		}
@@ -212,12 +107,14 @@ class ScanView extends Component {
 
 	handleConnectPress(device) {
 		let connected = this.props.ble.connectedPeripherals.map(p=>p.id).includes(device.id);
+		let hasAutoConnect = this.props.ble.knownPeripherals.filter(p=>p.autoConnect === true & p.id === device.id).length > 0;
+
 		if (connected) {
 			this.props.bleDisconnect(BleManager, device) 
 		}
 		else {
 			this.props.bleConnecting(device);
-			this.props.bleConnect(BleManager, realm, device);
+			this.props.bleConnect(BleManager, realm, device, hasAutoConnect);
 		}	
 	}
 
@@ -228,7 +125,6 @@ class ScanView extends Component {
 				Actions.DeviceDetailView({
 					title: device.name, 
 					device: s,
-					handleAutoNotify: this.handleAutoNotify,
 				});
 			})
 			.catch((err) => {
@@ -245,56 +141,10 @@ class ScanView extends Component {
 		}
 		else {
 			this.props.bleModifyDevice(realm, device, true, true, true);
-			if (connected) this.handleAutoNotify(device.id);
+			if (connected) eventHandlers.handleAutoNotify(device.id);
+			else eventHandlers.handleAutoConnect([device]);
 			Toast.showLongBottom('Added favorite. Auto-connect and auto-record are now ON.');
 		} 
-	}
-
-	handleAutoConnect(autoConnectPeripherals) {
-		// If device is set to autoConnect in DB, try to connect (unless already connected/connecting)
-		let { peripherals, connectedPeripherals, connectingPeripherals, knownPeripherals} = this.props.ble;
-
-		autoConnectPeripherals.forEach((per) => {
-			let inRange = peripherals.map(p=>p.id).includes(per.id);
-			let connected = connectedPeripherals.map(p=>p.id).includes(per.id);
-			let connecting = connectingPeripherals.includes(per.id);
-
-			if (inRange && !connected && !connecting) {
-				console.log('attempting to autoconnect');
-				this.props.bleConnecting(per);
-				this.props.bleConnect(BleManager, realm, per);
-			}
-		});
-	}
-
-	handleAutoNotify(deviceID) {
-		// If device is set to autoNotify in DB, start notify on all notify-able chars
-    console.log('handleAutoNotify ' + deviceID);
-    try {
-		BleManager.retrieveServices(deviceID)
-			.then((data)=>{
-				console.log('handleautonotify promise resolves');
-				if (!data.characteristics) return;
-				let notifyableChars = data.characteristics.filter((c)=>{
-					return c.properties.hasOwnProperty('Notify') && c.properties.Notify === 'Notify';
-				});
-
-        // characteristics that are not notifying and their device is connected
-        let charArray = notifyableChars.filter((nc)=> {
-          let notifying = this.props.ble.notifyingChars.map(c=>c.characteristic).includes(nc.characteristic);
-          let connected = this.props.ble.connectedPeripherals.map(p=>p.id).includes(deviceID);
-          return !notifying && connected;
-        });
-        let sendCharArray = charArray.slice();
-        if (charArray.length > 0) this.props.bleNotify(BleManager, deviceID, sendCharArray); 
-		})
-    .catch((err) => {
-      console.log(err);
-    });
-  	}
-  	catch (err) {
-  		console.log('autonotify error: ', err);
-  	}
 	}
 
 	render() {
@@ -302,7 +152,7 @@ class ScanView extends Component {
 		let { started, startError, scanning, scanError, peripherals, connectedPeripherals,
 			connectingPeripherals, knownPeripherals, connectError } = this.props.ble;
 		let favoritePeripherals = knownPeripherals.filter(p=>p.favorite === true);
-		console.log('Scanview render');
+		console.log('Scanview render, scanning is ' + scanning);
 		function scanText() {
 			if (scanning) return <Text style={buttonText}>Press to Stop</Text>
 			else return <Text style={buttonText}>Press to Scan</Text>

@@ -17,6 +17,7 @@ import Switch from 'react-native-switch-pro';
 import BleManager from 'react-native-ble-manager';
 import { connect } from 'react-redux';
 
+import eventHandlers from '../utils/eventHandlers';
 import realm from '../realm';
 import { 
 	bleConnect, 
@@ -106,7 +107,7 @@ class DeviceDetailView extends Component {
 
 	handleSwitch(realm, device, willBeFavorite, willHaveAutoConnect, willHaveAutoNotify) {
 		this.props.bleModifyDevice(realm, device, willBeFavorite, willHaveAutoConnect, willHaveAutoNotify);
-		if (willHaveAutoNotify) this.props.handleAutoNotify(device.id);
+		if (willHaveAutoNotify) eventHandlers.handleAutoNotify.call(eventHandlers, device.id);
 	}
 
 	render() {
@@ -188,14 +189,17 @@ class DeviceDetailView extends Component {
 									let valueCount = realm.objects('Data')
 										.filtered('characteristic == "' + c.characteristic +'"').length;
 									let notifying = notifyingChars.map(ch=>ch.characteristic).includes(c.characteristic);
-									console.log(c);
+									// human readable description of the characteristic (e.g. measures air quality)
+									let humanReadable=[];
+									if (c.descriptors) humanReadable = c.descriptors.filter(d=> d.uuid === '2901');
+									purpose = humanReadable.length === 0 ? 'unknown' :
+										humanReadable[0].value != null ? humanReadable[0].value : 'unknown';
 									return (
 										<CharBox
 											key={c.characteristic}
 											service={s.uuid}
 											characteristic={c.characteristic}
-											purpose={!c.descriptors ? 'unknown' : 
-												c.descriptors[0].value ? c.descriptors[0].value : 'unknown'}
+											purpose={humanReadable}
 											read={read}
 											notify={notify}
 											hasAutoNotify={hasAutoNotify}
@@ -321,7 +325,8 @@ const {
 
 function mapStateToProps(state) {
   return {
-    ble: state.ble
+    ble: state.ble,
+    notification: state.notification,
   };
 }
 

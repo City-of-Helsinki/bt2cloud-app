@@ -12,7 +12,9 @@ import {
 } from 'react-native';
 
 import { connect } from 'react-redux';
+import Switch from 'react-native-switch-pro';
 import realm from '../realm';
+import configureBackgroundMode from '../configureBackgroundMode';
 import Utils from '../utils/utils';
 import Colors from '../colors';
 
@@ -29,6 +31,7 @@ class SettingsView extends Component {
 		super(props);
 		this.saveDiskIntervalToDB = this.saveDiskIntervalToDB.bind(this);
 		this.saveGPSIntervalToDB = this.saveGPSIntervalToDB.bind(this);
+		this.setBGMode = this.setBGMode.bind(this);
 		this.state={
 			gpsInputValue: props.settings.GPSInterval.toString(),
 		};
@@ -58,6 +61,10 @@ class SettingsView extends Component {
 		this.props.settingsChangeGPSInterval(value);
 	}
 
+	setBGMode() {
+		this.props.settings.backgroundMode ? configureBackgroundMode.disable() : configureBackgroundMode.enable();
+	}
+
 	render() {
 		let { deviceInfo, flushToDiskInterval, GPSInterval, activeBackend } = this.props.settings;
 
@@ -81,6 +88,16 @@ class SettingsView extends Component {
 							style={textInput}
 							underlineColorAndroid='transparent'
 						/>
+						<Text style={sliderText}>Background mode (can read BLE even when app is killed):</Text>
+						<Switch 
+							height={40}
+							width={80}		
+							value={this.props.settings.backgroundMode}
+							backgroundActive={Colors.GREEN}
+							backgroundInactive={Colors.GRAY}
+							circleColor={Colors.WHITE}
+							onSyncPress={this.setBGMode}
+						/>						
 					</View>
 				</ScrollView>
 			</View>

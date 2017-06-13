@@ -1,11 +1,11 @@
 import React, { Component } from 'react';
-
+import { Dimensions, StyleSheet, View } from 'react-native';
 import ScrollableTabView from 'react-native-scrollable-tab-view';
 import TabBar from '../components/TabBar';
 
 import { connect } from 'react-redux';
 import BGTimer from 'react-native-background-timer';
-
+import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import realm from '../realm';
 import ScanView from './ScanView';
 import BackendsView from './BackendsView';
@@ -23,62 +23,30 @@ class MainView extends Component {
 
 	constructor(props) {
 		super(props);
-		this.setGPSTrigger = this.setGPSTrigger.bind(this);
-	}
-
-	componentDidMount(){
-    this.watchID = navigator.geolocation.watchPosition((position) => {
-    	console.log('successfully got watched location', position);
-      this.lastPosition = position.coords;
-    },
-    (error) => {
-    	console.log(error)
-    }, GPS_OPTIONS);
-    
-    this.setGPSTrigger(this.props.settings.GPSInterval);		
-	}
-
-	setGPSTrigger(interval) {
-    this.GPSTrigger = BGTimer.setInterval(()=>{
-    	try {
-    		if (this.lastPosition.latitude) {
-	    		let gps = {
-	    			lat: this.lastPosition.latitude,
-	    			lon: this.lastPosition.longitude,
-	    			acc: this.lastPosition.accuracy.toFixed(3),
-	    			alt: this.lastPosition.altitude,
-	    			time: new Date(),
-	    		}
-	    		Utils.writeToFile(store, gps, FILE_TAG_GPS);
-    		}
-    	}
-    	catch(err) {
-    		console.log('error writing GPS to file', err);
-    	}	      
-    }, interval * 1000);		
 	}
 
 	componentWillReceiveProps(newProps) {
 		if (!newProps.settings || !newProps.settings.GPSInterval) return;
 		
 		if (newProps.settings.GPSInterval !== this.props.settings.GPSInterval) {
-			if (this.GPSTrigger) BGTimer.clearInterval(this.GPSTrigger);
-			this.setGPSTrigger(newProps.settings.GPSInterval);
+			if (GPSTrigger) BGTimer.clearInterval(GPSTrigger);
+			setGPSTrigger(newProps.settings.GPSInterval);
 		}
-	}
-
-	componentWillUnmount() {
-		if (this.watchID) navigator.geolocation.clearWatch(this.watchID);
 	}
 
 	render() {
 		console.log('mainView render');
 	  return (
-	    <ScrollableTabView renderTabBar={() => <TabBar />}>
-	      <ScanView tabLabel="Nearby devices" />
-	      <BackendsView tabLabel="Backends" />
-	      <SettingsView tabLabel="App Settings" />
-	    </ScrollableTabView>
+	  	<View style={{flex: 1}}>
+		    <ScrollableTabView renderTabBar={() => <TabBar />}>
+		      <ScanView tabLabel="Nearby devices" />
+		      <BackendsView tabLabel="Backends" />
+		      <SettingsView tabLabel="App Settings" />
+		    </ScrollableTabView>
+		    {this.props.recording && <View style={styles.recIcon}>
+		    	<Icon name="record-rec" size={60} color="#F00" />
+		    </View>}
+	    </View>
 	  );
 	}
 }
@@ -86,6 +54,7 @@ class MainView extends Component {
 function mapStateToProps(state) {
   return {
   	settings: state.settings,
+  	recording: state.ble.notifyingChars.length > 0,
   };
 }
 
@@ -93,5 +62,18 @@ function mapDispatchToProps(dispatch) {
   return {
   };
 }
+
+const styles = StyleSheet.create({
+	recIcon: {
+		zIndex: 999,
+		position: 'absolute',
+		bottom: 20,
+		left: 0,
+		width: 60,
+		height: 60,
+		justifyContent: 'center',
+		alignItems: 'center',
+	}
+});
 
 export default connect(mapStateToProps, mapDispatchToProps)(MainView);

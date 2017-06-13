@@ -5,6 +5,7 @@ import {
   SETTINGS_CHANGE_GPS_INTERVAL,
   SETTINGS_SET_DEVICE_INFO,
   SETTINGS_REFRESH,
+  SETTINGS_SET_BACKGROUND_MODE,
 } from '../constants';
 import {
   TEST_BACKEND_URL,
@@ -20,6 +21,7 @@ const initialState = {
   GPSInterval: Utils.convertRealmResultsToArray(realm.objects('Settings'))[0].saveGPSInterval,
   initializing: true,
   activeBackend: Utils.convertRealmResultsToArray(realm.objects('Settings'))[0].activeBackend,
+  backgroundMode: false,
 };
 
 export default function settingsReducer (state = initialState, action) {
@@ -45,6 +47,12 @@ export default function settingsReducer (state = initialState, action) {
           os,
         },
         initializing: false,
+      }
+
+    case SETTINGS_SET_BACKGROUND_MODE:
+      return {
+        ...state,
+        backgroundMode: action.on,
       }
 
     case SETTINGS_REFRESH:

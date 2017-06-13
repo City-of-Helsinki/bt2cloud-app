@@ -35,6 +35,7 @@ export const SETTINGS_CHANGE_FLUSH_TO_DISK = 'SETTINGS_CHANGE_FLUSH_TO_DISK';
 export const SETTINGS_CHANGE_GPS_INTERVAL = 'SETTINGS_CHANGE_GPS_INTERVAL';
 export const SETTINGS_SET_DEVICE_INFO = 'SETTINGS_SET_DEVICE_INFO';
 export const SETTINGS_REFRESH = 'SETTINGS_REFRESH';
+export const SETTINGS_SET_BACKGROUND_MODE = 'SETTINGS_SET_BACKGROUND_MODE';
 
 //FILESYSTEM OPERATIONS
 export const FILESYSTEM_WRITING = 'FILESYSTEM_WRITING';
@@ -49,6 +50,11 @@ export const FILE_TAG_DATA = 'data_log';
 export const FILE_TAG_GPS = 'gps_log';
 export const GPS_OPTIONS = {
 	enableHighAccuracy: true,
+	timeout: 50000,
+	maximumAge: 0,
+};
+export const SECONDARY_LOCATION_OPTIONS = {
+	enableHighAccuracy: false,
 	timeout: 50000,
 	maximumAge: 0,
 };

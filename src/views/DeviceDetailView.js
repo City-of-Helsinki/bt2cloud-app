@@ -189,13 +189,17 @@ class DeviceDetailView extends Component {
 									let valueCount = realm.objects('Data')
 										.filtered('characteristic == "' + c.characteristic +'"').length;
 									let notifying = notifyingChars.map(ch=>ch.characteristic).includes(c.characteristic);
+									// human readable description of the characteristic (e.g. measures air quality)
+									let humanReadable=[];
+									if (c.descriptors) humanReadable = c.descriptors.filter(d=> d.uuid === '2901');
+									purpose = humanReadable.length === 0 ? 'unknown' :
+										humanReadable[0].value != null ? humanReadable[0].value : 'unknown';
 									return (
 										<CharBox
 											key={c.characteristic}
 											service={s.uuid}
 											characteristic={c.characteristic}
-											purpose={!c.descriptors ? 'unknown' : 
-												c.descriptors[0].value ? c.descriptors[0].value : 'unknown'}
+											purpose={humanReadable}
 											read={read}
 											notify={notify}
 											hasAutoNotify={hasAutoNotify}

@@ -67,22 +67,22 @@ class ScanView extends Component {
 			console.log('not initialized. this is fine.');
 		}
 		// if service started and startScanByDefault is true, start scan immediately
-		if (this.props.ble.started && !this.props.ble.scanStarting && !this.props.ble.scanning
-			&& this.props.ble.startScanByDefault) {
-			this.props.bleScanStart(BleManager);
-			this.props.getConnectedPeripherals(BleManager);
-		}	
 	}
 
 	componentDidUpdate() {
     // handle auto connect and notify whenever applicable
     let autoConnectPeripherals = this.props.ble.knownPeripherals.filter(p=>p.autoConnect === true);
-    eventHandlers.handleAutoConnect.call(eventHandlers, autoConnectPeripherals);
-			
+		
+		if (this.props.ble.started && !this.props.ble.scanStarting && !this.props.ble.scanning
+			&& this.props.ble.startScanByDefault) {
+			this.props.bleScanStart(BleManager);
+			this.props.getConnectedPeripherals(BleManager);
+		}				
 	}
 
 	handleScanPress() {
 		let { scanning } = this.props.ble;
+		console.log('scan button press, current scanning status: ' + scanning);
 		if (scanning) {
 			this.props.bleScanStop(BleManager); 
 		}
@@ -107,12 +107,14 @@ class ScanView extends Component {
 
 	handleConnectPress(device) {
 		let connected = this.props.ble.connectedPeripherals.map(p=>p.id).includes(device.id);
+		let hasAutoConnect = this.props.ble.knownPeripherals.filter(p=>p.autoConnect === true & p.id === device.id).length > 0;
+
 		if (connected) {
 			this.props.bleDisconnect(BleManager, device) 
 		}
 		else {
 			this.props.bleConnecting(device);
-			this.props.bleConnect(BleManager, realm, device);
+			this.props.bleConnect(BleManager, realm, device, hasAutoConnect);
 		}	
 	}
 
@@ -139,7 +141,8 @@ class ScanView extends Component {
 		}
 		else {
 			this.props.bleModifyDevice(realm, device, true, true, true);
-			if (connected) eventHandlers.handleAutoNotify.call(eventHandlers, device.id);
+			if (connected) eventHandlers.handleAutoNotify(device.id);
+			else eventHandlers.handleAutoConnect([device]);
 			Toast.showLongBottom('Added favorite. Auto-connect and auto-record are now ON.');
 		} 
 	}
@@ -149,7 +152,7 @@ class ScanView extends Component {
 		let { started, startError, scanning, scanError, peripherals, connectedPeripherals,
 			connectingPeripherals, knownPeripherals, connectError } = this.props.ble;
 		let favoritePeripherals = knownPeripherals.filter(p=>p.favorite === true);
-		console.log('Scanview render');
+		console.log('Scanview render, scanning is ' + scanning);
 		function scanText() {
 			if (scanning) return <Text style={buttonText}>Press to Stop</Text>
 			else return <Text style={buttonText}>Press to Scan</Text>

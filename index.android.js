@@ -4,13 +4,13 @@ import {
   NativeAppEventEmitter,
 } from 'react-native';
 
-import BackgroundJob from 'react-native-background-job';
 import BGTimer from 'react-native-background-timer';
 import { Provider } from 'react-redux';
 import App from './src/app';
 import store from './src/store';
+import configureBackgroundMode from './src/configureBackgroundMode';
 
-import { GPS_OPTIONS, FILE_TAG_GPS } from './src/constants';
+import { GPS_OPTIONS, FILE_TAG_GPS, SECONDARY_LOCATION_OPTIONS } from './src/constants';
 import Utils from './src/utils/utils';
 import eventHandlers from './src/utils/eventHandlers';
 
@@ -37,8 +37,17 @@ NativeAppEventEmitter
 
 // GPS EVENT HANDLERS... todo move to separate module because global variables are BAAAAAAAAAAAD.
 lastPosition = null, GPSTrigger = null;
+
+// watch for both accurate and coarse location and update whichever successfully provides location
+const watchID_secondary = navigator.geolocation.watchPosition((position) => {
+  	console.log('successfully got watched secondary provider location', position);
+  	lastPosition = position.coords;
+  },
+    (error) => {
+    	console.log(error)
+    }, SECONDARY_LOCATION_OPTIONS);
 const watchID = navigator.geolocation.watchPosition((position) => {
-  	console.log('successfully got watched location', position);
+  	console.log('successfully got watched GPS location', position);
   	lastPosition = position.coords;
   },
     (error) => {
@@ -67,24 +76,7 @@ setGPSTrigger = (interval) => {
 
 setGPSTrigger(store.getState().settings.GPSInterval);
 
-const foregroundService = true;
-
-if (foregroundService) {
-	const backgroundJob = {
-		jobKey: 'keepAlive',
-		job: () => console.log('Running in background...'),
-	};
-	const backgroundSchedule = {
-		jobKey: 'keepAlive',
-		timeout: 5000,
-		alwaysRunning: true,
-		notificationTitle: 'BT2Cloud',
-		notificationText: 'I am running in the background so I can scan and record 24/7 for you',
-	};
-	BackgroundJob.register(backgroundJob);
-	BackgroundJob.schedule(backgroundSchedule);
-}
-
+if (store.getState().settings.backgroundMode) configureBackgroundMode.enable();
 
 
 

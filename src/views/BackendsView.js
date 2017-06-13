@@ -36,6 +36,8 @@ const BasicAuth = t.struct({
 	password: t.maybe(t.String),
 });
 
+// To validate the form, Basic Auth needs to have both the username and password set, or neither of them.
+// If only one is set, the validation fails.
 const BothNeeded = t.refinement(BasicAuth, function(b) {
 	return b.username != null && b.password != null || b.username == null && b.password == null;
 });
@@ -197,11 +199,12 @@ class BackendsView extends Component {
 		this.props.refreshSettings();
 	}
 
-	sendFile(filenames, totalFiles, remainingFiles, datestring) {
+	sendFile(filenames, totalFiles, remainingFiles, datestring, errors=[]) {
 		console.log('sendFile');
 		if (filenames.length < 1) return;
-		let protocol = this.props.settings.activeBackend.protocol;
-		let url = this.props.settings.activeBackend.url;
+		let { activeBackend } = this.props.settings;
+		let protocol = activeBackend.protocol;
+		let url = activeBackend.url;
 		url = url.replace(/(^\w+:|^)\/\//, ''); // remove protocols if user entered them		
 		let request = {
 			type: 'POST',
@@ -216,8 +219,15 @@ class BackendsView extends Component {
 				phoneId: this.props.settings.deviceInfo.id,
 			},
 		};
+
+		if (activeBackend.username && activeBackend.password) {
+			request.headers['Authorization'] = 
+				'Basic ' + Utils.btoa(activeBackend.username + ':' + activeBackend.password);
+		}
+
+		console.log(request.headers['Authorization']);
+
 		this.props.uploading();
-		console.log(request);
 		Utils.httpRequest(request)
 			.then((res)=> {
 				console.log(res.status);
@@ -226,10 +236,10 @@ class BackendsView extends Component {
 						console.log('moved');
 						filenames.splice(0,1);
 						remainingFiles -= 1;
-						if (filenames.length>0) this.sendFile(filenames, totalFiles, remainingFiles, datestring);
+						if (filenames.length>0) this.sendFile(filenames, totalFiles, remainingFiles, datestring, errors);
 						else {
 							this.props.uploadingDone();
-							Alert.alert('Upload result', 'Successfully sent ' + (totalFiles-remainingFiles) + '/' + totalFiles + ' zip files');						
+							this.showUploadResultAlert(errors, totalFiles, remainingFiles);
 						}
 					})
 					.catch((err)=> {
@@ -239,12 +249,25 @@ class BackendsView extends Component {
 			.catch((err)=> {
 				console.log('Error sending to backend: ' + err);
 				filenames.splice(0,1);
-				if (filenames.length>0) this.sendFile(filenames, totalFiles, remainingFiles, datestring);
+				errors.push(err);
+				if (filenames.length>0) this.sendFile(filenames, totalFiles, remainingFiles, datestring, errors);
 				else {
 					this.props.uploadingDone();
-					Alert.alert('Upload result', 'Successfully sent ' + (totalFiles-remainingFiles) + '/' + totalFiles + ' zip files');
+					this.showUploadResultAlert(errors, totalFiles, remainingFiles);
 				}
 			});
+	}
+
+	showUploadResultAlert(errors, totalFiles, remainingFiles) {
+		let alertTitle, alertMessage;
+		if (errors.length === 0) alertTitle = 'Upload success';
+		if (errors.length > 0 && errors.length < totalFiles) alertTitle = 'Upload partial success';
+		if (errors.length === totalFiles) alertTitle = 'Upload failed';
+
+		alertMessage = 'Successfully sent ' + (totalFiles-remainingFiles) + '/' + totalFiles + ' zip files \n';
+		if (errors.length>0) alertMessage += 'Errors: \n';
+		errors.forEach(e=> alertMessage += e + '\n');
+		Alert.alert(alertTitle, alertMessage);
 	}
 
 	handleSendPress() {
@@ -261,7 +284,7 @@ class BackendsView extends Component {
 						});											
 			})
 			.catch((err)=> {
-				Alert.alert('Error', 'Error creating zip - file in use. Please try again. ' +err);
+				Alert.alert('Error', err);
 			});
 	}
 
@@ -322,8 +345,10 @@ class BackendsView extends Component {
 						</View>
 					</ScrollView>
 					<TouchableHighlight 
-						style={this.props.isUploading ? [largeButton, disabled] : largeButton} 
-						onPress={this.props.isUploading ? ()=>null : this.handleSendPress}>
+						style={this.props.isUploading || !this.props.settings.activeBackend ? 
+							[largeButton, disabled] : largeButton} 
+						onPress={this.props.isUploading || this.props.settings.activeBackend ? 
+							()=>null : this.handleSendPress}>
 						<Text style={buttonTextSmaller}>
 							{this.props.isUploading ? 'Sending...' : 'Send BLE/GPS data to backend'}
 						</Text>

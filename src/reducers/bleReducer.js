@@ -70,16 +70,17 @@ export default function bleReducer (state = initialState, action) {
     case BLE_SCAN_START: 
       console.log('BLE_SCAN_START');
       // clear devices from state except those that are connected
-      peripherals = state.connectedPeripherals.slice();
+      // peripherals = state.connectedPeripherals.slice();
       return {
         ...state,
         scanning: action.scanning,
         scanStarting: false,
-        peripherals, 
+        startScanByDefault: action.startScanByDefault,
         scanError: action.error ? action.error : null
       };
 
     case BLE_SCAN_ENDED: 
+      console.log('BLE_SCAN_ENDED');
       return {
         ...state,
         scanning: false,

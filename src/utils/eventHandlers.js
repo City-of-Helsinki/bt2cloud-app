@@ -30,12 +30,20 @@ const Handlers = {
 	// cannot be prevented on android
 	handleDiscoverPeripheral(peripheral) {
 
+		let deviceID = peripheral.id;
 		// parse legible text from here
 		// let base64Array = new Buffer(peripheral.advertising.data, 'base64').toString('ascii').split('');
 		let state = store.getState();
-		if (!state.ble.peripherals.map(p=>p.id).includes(peripheral.id)) {
+		if (!state.ble.peripherals.map(p=>p.id).includes(deviceID)) {
 			store.dispatch(bleUpdateAvailablePeripherals(peripheral, null));
 		}
+
+		let hasAutoConnect = state.ble.knownPeripherals.filter(p=>p.autoConnect === true & p.id === deviceID);
+		let connecting = state.ble.connectingPeripherals.includes(deviceID);
+		if (hasAutoConnect.length !== 0 && !connecting) {
+			store.dispatch(bleConnecting({id: deviceID}));
+			store.dispatch(bleConnect(BleManager, realm, {id: deviceID}));
+		}		
 	},
 
 	handleConnectPeripheral(data) {		
@@ -51,11 +59,9 @@ const Handlers = {
     if (hasAutoNotify.length !== 0 && !state.ble.startingAutoNotify) {
       // Dirty hack. Prevents 2 concurrent retrieveServices native calls
       // Concurrent calls cause promise to never resolve.
-
-      // store.dispatch(bleAutoNotifyStarting(deviceID));
       BGTimer.setTimeout(()=>{
       	that.handleAutoNotify(deviceID);
-      }, 600);
+      }, 2000);
     }
 	},
 
@@ -64,7 +70,7 @@ const Handlers = {
 		if (!data.hasOwnProperty('peripheral')) return;
 		let deviceID = data.peripheral;
 		let state = store.getState();
-		let { notifyingChars, peripheralServiceData } = state.ble;
+		let { notifyingChars, peripheralServiceData, connectingPeripherals } = state.ble;
 
 		if (AppState.currentState === 'active') {
 			Toast.showShortCenter('Disconnected from ' + deviceID);
@@ -73,22 +79,26 @@ const Handlers = {
 			Vibration.vibrate();
 		}
 		
+		console.log('notifying chars: ' + notifyingChars);
 
-		if (peripheralServiceData && peripheralServiceData.length > 0) {
-
-			// TODO REMOVE ALL NOTIFYING CHARS FROM STATE ON DISCONNECT
-			let disconnectedDevicesChars = notifyingChars.filter(c=>c.deviceID === deviceID)
-				.map(ch=>ch.characteristic);
-			disconnectedDevicesChars.forEach(dc => store.dispatch(bleNotifyStopped(dc)));
-		}
+		// TODO REMOVE ALL NOTIFYING CHARS FROM STATE ON DISCONNECT
+		let disconnectedDevicesChars = notifyingChars.filter(c=>c.deviceID === deviceID)
+			.map(ch=>ch.characteristic);
+		disconnectedDevicesChars.forEach(dc => store.dispatch(bleNotifyStopped(dc)));
 		
 		store.dispatch(getConnectedPeripherals(BleManager));
-		let hasAutoConnect = store.getState().ble.knownPeripherals.filter(p=>p.autoConnect === true & p.id === deviceID);
-
-		if (hasAutoConnect.length !== 0 && !store.getState().ble.connecting) {
-			store.dispatch(bleConnecting({id: deviceID}));
-			store.dispatch(bleConnect(BleManager, realm, {id: deviceID}));
-		}
+		state = store.getState();
+		
+		// wait for state to really reflect if the device is still trying to connect
+		// if not, try again
+		BGTimer.setTimeout(()=> {
+			let hasAutoConnect = state.ble.knownPeripherals.filter(p=>p.autoConnect === true & p.id === deviceID);
+			let connecting = state.ble.connectingPeripherals.includes(deviceID);			
+			if (hasAutoConnect.length !== 0 && !connecting) {
+				store.dispatch(bleConnecting({id: deviceID}));
+				store.dispatch(bleConnect(BleManager, realm, {id: deviceID}));
+			}			
+		}, 1000)
 	},
 
 	handleNotification(data) {
@@ -117,14 +127,14 @@ const Handlers = {
 	},
 
 	handleScanEnded() {
-		store.dispatch(getAvailablePeripherals(BleManager));
-		store.dispatch(bleScanEnded(store.getState().ble.startScanByDefault));
+		//store.dispatch(getAvailablePeripherals(BleManager));
+		console.log(store.getState().ble.startScanByDefault);
+		store.dispatch(bleScanEnded(BleManager, store.getState().ble.startScanByDefault));
 	},
 
 	handleAutoConnect(autoConnectPeripherals) {
 		// If device is set to autoConnect in DB, try to connect (unless already connected/connecting)
 		let { peripherals, connectedPeripherals, connectingPeripherals, knownPeripherals} = store.getState().ble;
-
 		autoConnectPeripherals.forEach((per) => {
 			let inRange = peripherals.map(p=>p.id).includes(per.id);
 			let connected = connectedPeripherals.map(p=>p.id).includes(per.id);
@@ -132,8 +142,9 @@ const Handlers = {
 
 			if (inRange && !connected && !connecting) {
 				console.log('attempting to autoconnect');
+				let hasAutoConnect = true;
 				store.dispatch(bleConnecting(per));
-				store.dispatch(bleConnect(BleManager, realm, per));
+				store.dispatch(bleConnect(BleManager, realm, per, hasAutoConnect));
 			}
 		});
 	},	
@@ -146,6 +157,7 @@ const Handlers = {
 		BleManager.retrieveServices(deviceID)
 			.then((data)=>{
 				console.log('handleautonotify promise resolves');
+				console.log('data: ' + data);
 				if (!data.characteristics) return;
 				let notifyableChars = data.characteristics.filter((c)=>{
 					return c.properties.hasOwnProperty('Notify') && c.properties.Notify === 'Notify';

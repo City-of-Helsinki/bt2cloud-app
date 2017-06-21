@@ -10,6 +10,7 @@ import {
 	Alert,
 } from 'react-native';
 
+import Package from '../../package.json';
 import t from 'tcomb-form-native';
 import moment from 'moment';
 import generateUuid from 'react-native-uuid';
@@ -72,8 +73,8 @@ const options = {
 			},
 			password: {
 				label: 'Password',
-			},	
-		},	
+			},
+		},
 	},
 };
 
@@ -89,7 +90,7 @@ class BackendsView extends Component {
 		this.handleSetActivePress = this.handleSetActivePress.bind(this);
 		this.onChange = this.onChange.bind(this);
 		this.handleSendPress = this.handleSendPress.bind(this);
-		this.sendFile = this.sendFile.bind(this);		
+		this.sendFile = this.sendFile.bind(this);
 		this.state = {
 			editView: false,
 			editedBackend: null,
@@ -123,7 +124,7 @@ class BackendsView extends Component {
 			let { name, protocol, url, basicAuth } = formInput;
 			realm.write(()=>{
 				let backend = realm.create('Backend', {
-					id: uuid,	
+					id: uuid,
 					name,
 					protocol,
 					url,
@@ -152,7 +153,7 @@ class BackendsView extends Component {
 
 	}
 
-	handleConfirmRemove(backendObject){		
+	handleConfirmRemove(backendObject){
 		let that = this;
 		realm.write(()=>{
 			let backend = realm.objects('Backend').filtered('id == $0', backendObject.id)[0];
@@ -163,13 +164,13 @@ class BackendsView extends Component {
 				realm.create('Settings', {
 					name: 'settings',
 					activeBackend: null,
-				}, true);		
+				}, true);
 				that.props.refreshSettings();
 			}
 
 			realm.delete(backend);
 			that.setState({backends: Utils.convertRealmResultsToArray(realm.objects('Backend'))});
-		});			
+		});
 	}
 
 	handleEditPress(backendObject){
@@ -205,23 +206,27 @@ class BackendsView extends Component {
 		let { activeBackend } = this.props.settings;
 		let protocol = activeBackend.protocol;
 		let url = activeBackend.url;
-		url = url.replace(/(^\w+:|^)\/\//, ''); // remove protocols if user entered them		
+		url = url.replace(/(^\w+:|^)\/\//, ''); // remove protocols if user entered them
+		const appName = Package.name;
+		const appVersion = Package.version;
 		let request = {
 			type: 'POST',
 			url: protocol + '://' + url,
 			headers: {
 				'Accept': 'application/json',
 				'Content-Type': 'multipart/form-data',
-				'User-Agent': 'Bt2Cloud/v0.1/' + datestring, 
+				'User-Agent': appName + '/v.' + appVersion + '/' + datestring,
 			},
 			filename: filenames[0],
 			metadata: {
-				phoneId: this.props.settings.deviceInfo.id,
+				phoneId: this.props.settings.deviceInfo.id || 'unknown',
+				phoneModel: this.props.settings.deviceInfo.model || 'unknown',
+				phoneOs: this.props.settings.deviceInfo.os || 'unknown',
 			},
 		};
 
 		if (activeBackend.username && activeBackend.password) {
-			request.headers['Authorization'] = 
+			request.headers['Authorization'] =
 				'Basic ' + Utils.btoa(activeBackend.username + ':' + activeBackend.password);
 		}
 
@@ -281,7 +286,7 @@ class BackendsView extends Component {
 							let datestring = moment(new Date()).format('YYYY-MM-DD');
 							files = filenames.slice();
 							this.sendFile(files, files.length, files.length, datestring);
-						});											
+						});
 			})
 			.catch((err)=> {
 				Alert.alert('Error', err);
@@ -293,14 +298,14 @@ class BackendsView extends Component {
 		function renderBackends(backends) {
 			if (backends && backends.length > 0) {
 			return backends.map(b=> {
-				let active = !that.props.settings.activeBackend ? false 
+				let active = !that.props.settings.activeBackend ? false
 					: that.props.settings.activeBackend.id === b.id;
 				return (
-					<BackendBox 
+					<BackendBox
 						key={b.name}
-						backend={b} 
+						backend={b}
 						active={active}
-						style={active ? activeBackendBox : backendBox} 
+						style={active ? activeBackendBox : backendBox}
 						removePress={that.handleRemovePress}
 						editPress={that.handleEditPress}
 						setActivePress={(that.handleSetActivePress)}
@@ -309,7 +314,7 @@ class BackendsView extends Component {
 			});
 			}
 			else return <Text>No backends set. Press the + button to add a backend.</Text>;
-		}		
+		}
 
 		let { editView, backends } = this.state;
 		console.log('editview is ' + editView);
@@ -328,15 +333,15 @@ class BackendsView extends Component {
 						<View style={formButtons}>
 							<TouchableHighlight onPress={this.handleSavePress} style={button}>
 								<Text style={buttonText}>Save</Text>
-							</TouchableHighlight>	
+							</TouchableHighlight>
 							<TouchableHighlight onPress={this.handleCancelPress} style={button}>
 								<Text style={buttonText}>Cancel</Text>
-							</TouchableHighlight>	
+							</TouchableHighlight>
 						</View>
 					</View>
 				</ScrollView>
 				}
-				{!editView && 
+				{!editView &&
 				<View style={{flex:1}}>
 					<ScrollView>
 						<View style={scrollView}>
@@ -344,30 +349,30 @@ class BackendsView extends Component {
 						{renderBackends(backends)}
 						</View>
 					</ScrollView>
-					<TouchableHighlight 
-						style={this.props.isUploading || !this.props.settings.activeBackend ? 
-							[largeButton, disabled] : largeButton} 
-						onPress={this.props.isUploading || !this.props.settings.activeBackend ? 
+					<TouchableHighlight
+						style={this.props.isUploading || !this.props.settings.activeBackend ?
+							[largeButton, disabled] : largeButton}
+						onPress={this.props.isUploading || !this.props.settings.activeBackend ?
 							()=>null : this.handleSendPress}>
 						<Text style={buttonTextSmaller}>
 							{this.props.isUploading ? 'Sending...' : 'Send BLE/GPS data to backend'}
 						</Text>
-					</TouchableHighlight>					
+					</TouchableHighlight>
 				</View>
 				}
 				{!editView &&
-					<FloatingActionButton 
-						displayText="+" 
-						color={Colors.GREEN} 
+					<FloatingActionButton
+						displayText="+"
+						color={Colors.GREEN}
 						fontSize={40}
-						size={60} 
+						size={60}
 						onPress={this.handleFloatingButtonPress}
-					/>	
-				}			
+					/>
+				}
 			</View>
 		);
 	}
-	
+
 }
 
 styles = StyleSheet.create({
@@ -398,7 +403,7 @@ styles = StyleSheet.create({
 		alignItems: 'center',
 		backgroundColor: Colors.BLUE,
 		alignSelf: 'center',
-	},	
+	},
 	disabled: {
 		backgroundColor: Colors.GREY,
 	},
@@ -411,7 +416,7 @@ styles = StyleSheet.create({
 		color: 'white',
 		fontSize: 15,
 		textAlign: 'center',
-	},	
+	},
 	text: {
 		fontSize: 18,
 		color: 'black',
@@ -440,7 +445,7 @@ styles = StyleSheet.create({
 		marginTop: 15,
 		borderColor: Colors.BLUE,
 		backgroundColor: Colors.WHITE,
-	},	
+	},
 	activeBackendBox: {
 		width: Dimensions.get('window').width - 40,
 		height: 60,
@@ -450,16 +455,16 @@ styles = StyleSheet.create({
 		marginTop: 15,
 		borderColor: Colors.BLUE,
 		backgroundColor: Colors.BLUE,
-	},		
+	},
 });
 
-const { 
-	container, 
+const {
+	container,
 	button,
 	largeButton,
-	buttonText, 
+	buttonText,
 	buttonTextSmaller,
-	text, 
+	text,
 	textSmall,
 	scrollView,
 	formButtons,

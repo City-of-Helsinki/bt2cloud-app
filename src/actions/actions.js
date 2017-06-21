@@ -1,9 +1,9 @@
-import { 
-  BLE_START, 
+import {
+  BLE_START,
   BLE_STARTING,
   BLE_SCAN_START,
   BLE_SCAN_STARTING,
-  BLE_SCAN_ENDED, 
+  BLE_SCAN_ENDED,
   BLE_CONNECTING,
   BLE_CONNECT_ERROR,
   BLE_UPDATE_CONNECTED_PERIPHERALS,
@@ -67,7 +67,7 @@ export function bleScanStart(BleManager) {
   return (dispatch) => {
     dispatch({type: BLE_SCAN_STARTING});
     console.log('SCAN STARTING');
-    BleManager.scan([], 4)
+    BleManager.scan([], 3600)
       .then(() => {
         dispatch(bleScanStartResult());
       })
@@ -94,16 +94,29 @@ export function bleScanStop(BleManager) {
 // SCAN ENDED
 export function bleScanEnded(BleManager, autoRestartScan=true) {
   return (dispatch) => {
-    console.log('autorestartscan is ' +autoRestartScan);
-    dispatch(getAvailablePeripherals(BleManager));
-    if (autoRestartScan) {
-      // timeout prevents concurrentModificationException in native code
-      BGTimer.setTimeout(()=>dispatch(bleScanStart(BleManager)), 300);
-    }
-    else dispatch({
-      type: BLE_SCAN_ENDED,
-      startScanByDefault: false,
-    });
+    // get discovered peripherals after scan and restart if user didnt manually stop
+    BleManager.getDiscoveredPeripherals([])
+      .then((peripherals) => {
+        dispatch(bleUpdateAvailablePeripherals(null, peripherals));
+        if (autoRestartScan) {
+          BGTimer.setTimeout(() => dispatch(bleScanStart(BleManager)), 500);
+
+        }
+        else dispatch({
+          type: BLE_SCAN_ENDED,
+          startScanByDefault: false,
+        });
+      })
+      .catch((err) => {
+        console.log('error getting peripherals', err);
+        if (autoRestartScan) {
+          dispatch(bleScanStart(BleManager));
+        }
+        else dispatch({
+          type: BLE_SCAN_ENDED,
+          startScanByDefault: false,
+        });
+      });
   };
 }
 
@@ -143,8 +156,8 @@ export function bleConnect(BleManager, realm, device, hasAutoConnect) {
             }
             realm.write(()=>{
               realm.create('Device', {id, name}, true);
-            });        
-            dispatch(bleUpdateKnownPeripherals(data));             
+            });
+            dispatch(bleUpdateKnownPeripherals(data));
         });
       })
       .catch((err) => {
@@ -152,7 +165,7 @@ export function bleConnect(BleManager, realm, device, hasAutoConnect) {
         /*if (hasAutoConnect) {
           dispatch(bleConnecting(device));
           dispatch(bleConnect(BleManager, realm, device, hasAutoConnect));
-        }*/ 
+        }*/
       })
   }
 }
@@ -166,7 +179,7 @@ export function bleDisconnect(BleManager, device) {
       .catch((err) => {
         dispatch(bleConnectError(err));
       })
-  }  
+  }
 }
 
 // REFRESH AVAILABLE PERIPHERALS
@@ -188,7 +201,7 @@ export function bleUpdateAvailablePeripherals(peripheral, peripherals){
     type: BLE_UPDATE_AVAILABLE_PERIPHERALS,
     peripheral,
     peripherals
-  } 
+  }
 }
 
 // REFRESH CONNECTED PERIPHERALS
@@ -208,14 +221,14 @@ export function bleUpdateConnectedPeripherals(peripherals){
   return {
     type: BLE_UPDATE_CONNECTED_PERIPHERALS,
     peripherals
-  } 
+  }
 }
 
 export function bleUpdateKnownPeripherals(data){
   return {
     type: BLE_UPDATE_KNOWN_PERIPHERALS,
     data,
-  } 
+  }
 }
 
 export function bleReadError(deviceID, service, characteristic, error) {
@@ -224,7 +237,7 @@ export function bleReadError(deviceID, service, characteristic, error) {
     error: {
       deviceID,
       service,
-      characteristic,    
+      characteristic,
       message: error,
     }
   }
@@ -270,7 +283,7 @@ export function bleNotifyError(deviceID, service, characteristic, error) {
     error: {
       deviceID,
       service,
-      characteristic,    
+      characteristic,
       message: error,
     }
   }
@@ -313,7 +326,7 @@ export function bleNotifyStop(BleManager, deviceID, charArray) {
       .then(()=> {
         dispatch(bleNotifyStopped(charArray[0].characteristic))
         charArray.splice(0,1);
-        if (charArray.length > 0) bleNotifyStop(charArray);        
+        if (charArray.length > 0) bleNotifyStop(charArray);
       })
       .catch((error)=>{
         console.log(error);
@@ -339,8 +352,8 @@ export function bleModifyDevice(realm, device, favorite, autoConnect, autoNotify
   return (dispatch)=> {
     realm.write(()=>{
       realm.create('Device', {
-        id: device.id, 
-        name: device.name, 
+        id: device.id,
+        name: device.name,
         favorite,
         autoConnect,
         autoNotify,

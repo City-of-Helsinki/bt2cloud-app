@@ -87,7 +87,7 @@ android {
     buildToolsVersion "23.0.1"
 
     defaultConfig {
-        applicationId "com.ble_sovellus"
+        applicationId "com.bt2cloud"
         minSdkVersion 21
         targetSdkVersion 22
         versionCode 1
@@ -105,7 +105,7 @@ android {
                 keyPassword MYAPP_RELEASE_KEY_PASSWORD
             }
         }
-    }    
+    }
     splits {
         abi {
             reset()

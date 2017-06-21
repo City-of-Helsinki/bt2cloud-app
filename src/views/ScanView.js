@@ -22,18 +22,18 @@ import { Actions } from 'react-native-router-flux';
 import realm from '../realm';
 
 import { connect } from 'react-redux';
-import { 
-	bleStart, 
-	bleScanStart, 
+import {
+	bleStart,
+	bleScanStart,
 	bleScanStop,
-	bleScanEnded, 
-	bleConnect, 
+	bleScanEnded,
+	bleConnect,
 	bleConnecting,
 	bleDisconnect,
 	getConnectedPeripherals,
 	getAvailablePeripherals,
 	bleUpdateAvailablePeripherals,
-	bleAppendReadHistory, 
+	bleAppendReadHistory,
 	bleNotify,
 	bleNotifyStopped,
 	bleModifyDevice,
@@ -57,7 +57,7 @@ class ScanView extends Component {
 
 	}
 
-	componentDidMount() {	
+	componentDidMount() {
 		if (!this.props.ble.started && !this.props.ble.starting) this.props.bleStart(BleManager);
 		try {
 			this.props.getConnectedPeripherals(BleManager);
@@ -66,32 +66,28 @@ class ScanView extends Component {
 		catch(err) {
 			console.log('not initialized. this is fine.');
 		}
-		// if service started and startScanByDefault is true, start scan immediately
 	}
 
 	componentDidUpdate() {
-    // handle auto connect and notify whenever applicable
-    let autoConnectPeripherals = this.props.ble.knownPeripherals.filter(p=>p.autoConnect === true);
-		
 		if (this.props.ble.started && !this.props.ble.scanStarting && !this.props.ble.scanning
 			&& this.props.ble.startScanByDefault) {
 			this.props.bleScanStart(BleManager);
 			this.props.getConnectedPeripherals(BleManager);
-		}				
+		}
 	}
 
 	handleScanPress() {
 		let { scanning } = this.props.ble;
 		console.log('scan button press, current scanning status: ' + scanning);
 		if (scanning) {
-			this.props.bleScanStop(BleManager); 
+			this.props.bleScanStop(BleManager);
 		}
 		else {
 			if (Platform.OS === 'android') {
 				BleManager.enableBluetooth()
 					.then(()=> {
 						// this.props.getAvailablePeripherals();
-						this.props.bleScanStart(BleManager);						
+						this.props.bleScanStart(BleManager);
 					})
 					.catch((err)=> {
 						console.log('User refused to enable Bluetooth');
@@ -110,12 +106,12 @@ class ScanView extends Component {
 		let hasAutoConnect = this.props.ble.knownPeripherals.filter(p=>p.autoConnect === true & p.id === device.id).length > 0;
 
 		if (connected) {
-			this.props.bleDisconnect(BleManager, device) 
+			this.props.bleDisconnect(BleManager, device)
 		}
 		else {
 			this.props.bleConnecting(device);
 			this.props.bleConnect(BleManager, realm, device, hasAutoConnect);
-		}	
+		}
 	}
 
 	handleInfoPress(device) {
@@ -123,7 +119,7 @@ class ScanView extends Component {
 		BleManager.retrieveServices(device.id)
 			.then((s) => {
 				Actions.DeviceDetailView({
-					title: device.name, 
+					title: device.name,
 					device: s,
 				});
 			})
@@ -144,7 +140,7 @@ class ScanView extends Component {
 			if (connected) eventHandlers.handleAutoNotify(device.id);
 			else eventHandlers.handleAutoConnect([device]);
 			Toast.showLongBottom('Added favorite. Auto-connect and auto-record are now ON.');
-		} 
+		}
 	}
 
 	render() {
@@ -164,7 +160,7 @@ class ScanView extends Component {
 				let connectedIDs = connectedPeripherals.map(p3=>p3.id);
 				return !availableIDs.includes(p.id) && !connectedIDs.includes(p.id);
 			});
-			
+
 			allDevices = peripherals.concat(unavailableDevices).map((device)=> {
 				let connected = connectedPeripherals.map(p=>p.id).includes(device.id);
 				let connecting = connectingPeripherals.includes(device.id);
@@ -172,17 +168,17 @@ class ScanView extends Component {
 				let inRange = peripherals.map(p=>p.id).includes(device.id);
 				return (
 				<DeviceBox
-					mainAreaPress={connected ? that.handleInfoPress.bind(that, device) : that.handleConnectPress.bind(that, device)} 
+					mainAreaPress={connected ? that.handleInfoPress.bind(that, device) : that.handleConnectPress.bind(that, device)}
 					disconnectPress={that.handleConnectPress.bind(that, device)}
 					favPress={that.handleFavoritePress.bind(that, device, favorite, connected)}
-					key={device.id} 
+					key={device.id}
 					device={device}
 					favorite={favorite}
 					connecting={connecting}
 					connected={connected}
 					inRange={inRange}
 					style={[
-						deviceBox, 
+						deviceBox,
 						{
 							backgroundColor: !inRange ? '#555' : connected ? Colors.BLUE : connecting ? '#BBF': 'white',
 						}]
@@ -219,13 +215,13 @@ class ScanView extends Component {
 					<Text style={text}>In range: {peripherals.length}, connected to: {connectedPeripherals.length}</Text>
 					{peripherals.length > 0 && <Text style={textSmall}>Tap device to connect</Text>}
 				</View>
-				{started && 
+				{started &&
 					<TouchableHighlight onPress={this.handleScanPress.bind(this)} style={button}>
 						<View style={{flexDirection: 'row'}}>
 							<View>
-								{scanText()}					
+								{scanText()}
 							</View>
-							{scanning && <ActivityIndicator style={spinner} color='white' />}		
+							{scanning && <ActivityIndicator style={spinner} color='white' />}
 						</View>
 					</TouchableHighlight>
 				}
@@ -283,8 +279,8 @@ styles = StyleSheet.create({
 		alignItems: 'center',
 	},
 	deviceAmount: {
-		width: 260, 
-		alignItems: 'center', 
+		width: 260,
+		alignItems: 'center',
 		marginTop: 5,
 		marginBottom: 5,
 	},
@@ -292,12 +288,12 @@ styles = StyleSheet.create({
 		marginLeft: 10,
 	}
 });
-const { 
-	container, 
+const {
+	container,
 	button,
-	buttonText, 
-	text, 
-	textSmall, 
+	buttonText,
+	text,
+	textSmall,
 	deviceBox,
 	scrollView,
 	deviceAmount,
@@ -314,21 +310,21 @@ function mapDispatchToProps(dispatch) {
   return {
     bleStart: (BleManager) => dispatch(bleStart(BleManager)),
     bleScanStart: (BleManager) => dispatch(bleScanStart(BleManager)),
-		bleScanStop: (BleManager) => dispatch(bleScanStop(BleManager)),    
+		bleScanStop: (BleManager) => dispatch(bleScanStop(BleManager)),
     bleScanEnded: () => dispatch(bleScanEnded()),
     bleConnect: (BleManager, realm, device) => dispatch(bleConnect(BleManager, realm, device)),
     bleConnecting: (device) => dispatch(bleConnecting(device)),
     bleDisconnect: (BleManager,device) => dispatch(bleDisconnect(BleManager,device)),
     getAvailablePeripherals: (BleManager) => dispatch(getAvailablePeripherals(BleManager)),
     getConnectedPeripherals: (BleManager) => dispatch(getConnectedPeripherals(BleManager)),
-    bleUpdateAvailablePeripherals: (peripheral, peripherals) => 
+    bleUpdateAvailablePeripherals: (peripheral, peripherals) =>
     	dispatch(bleUpdateAvailablePeripherals(peripheral, peripherals)),
     bleAppendReadHistory: (deviceID, service, characteristic, hex) => dispatch(
     	bleAppendReadHistory(deviceID, service, characteristic, hex)),
-    bleNotify: (BleManager, deviceID, charArray) => 
-    	dispatch(bleNotify(BleManager, deviceID, charArray)),    
+    bleNotify: (BleManager, deviceID, charArray) =>
+    	dispatch(bleNotify(BleManager, deviceID, charArray)),
     bleNotifyStopped: (characteristic) => dispatch(bleNotifyStopped(characteristic)),
-    bleModifyDevice: (realm, device, favorite, autoConnect, autoNotify) => 
+    bleModifyDevice: (realm, device, favorite, autoConnect, autoNotify) =>
     	dispatch(bleModifyDevice(realm, device, favorite, autoConnect, autoNotify)),
   };
 }

@@ -1,4 +1,4 @@
-package com.ble_sovellus;
+package com.bt2cloud;
 
 import android.app.Application;
 

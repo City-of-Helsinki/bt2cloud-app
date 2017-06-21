@@ -9,12 +9,12 @@ import App from './src/app';
 
 const store = configureStore()
 
-const BLE_sovellus = () => (
+const Bt2Cloud = () => (
   <Provider store={store}>
     <App />
   </Provider>
 )
 
-AppRegistry.registerComponent('BLE_sovellus', () => BLE_sovellus);
+AppRegistry.registerComponent('Bt2Cloud', () => Bt2Cloud);
 
-export default BLE_sovellus;
+export default Bt2Cloud;

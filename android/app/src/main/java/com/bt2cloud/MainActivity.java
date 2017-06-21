@@ -1,4 +1,4 @@
-package com.ble_sovellus;
+package com.bt2cloud;
 
 import com.facebook.react.ReactActivity;
 
@@ -10,6 +10,6 @@ public class MainActivity extends ReactActivity {
      */
     @Override
     protected String getMainComponentName() {
-        return "BLE_sovellus";
+        return "Bt2Cloud";
     }
 }

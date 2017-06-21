@@ -1,15 +1,12 @@
 import Utils from '../utils/utils';
 import realm from '../realm';
-import { 
-  SETTINGS_CHANGE_FLUSH_TO_DISK, 
+import {
+  SETTINGS_CHANGE_FLUSH_TO_DISK,
   SETTINGS_CHANGE_GPS_INTERVAL,
   SETTINGS_SET_DEVICE_INFO,
   SETTINGS_REFRESH,
   SETTINGS_SET_BACKGROUND_MODE,
 } from '../constants';
-import {
-  TEST_BACKEND_URL,
-} from '../../localSettings';
 
 const initialState = {
   deviceInfo: {

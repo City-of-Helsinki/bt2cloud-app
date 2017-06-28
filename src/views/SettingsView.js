@@ -45,7 +45,7 @@ class SettingsView extends Component {
 			}, true);
 		});
 	}
-	
+
 	saveGPSIntervalToDB() {
 		console.log(this.state.gpsInputValue);
 		let value = parseInt(this.state.gpsInputValue, 10);
@@ -89,25 +89,25 @@ class SettingsView extends Component {
 							underlineColorAndroid='transparent'
 						/>
 						<Text style={sliderText}>Background mode (can read BLE even when app is killed):</Text>
-						<Switch 
+						<Switch
 							height={40}
-							width={80}		
+							width={80}
 							value={this.props.settings.backgroundMode}
 							backgroundActive={Colors.GREEN}
 							backgroundInactive={Colors.GRAY}
 							circleColor={Colors.WHITE}
 							onSyncPress={this.setBGMode}
-						/>						
+						/>
 					</View>
 				</ScrollView>
 			</View>
 		);
 	}
-	
+
 }
 
 /*<Text style={sliderText}>Save char data to disk every {flushToDiskInterval} reads</Text>
-<Slider 
+<Slider
 	minimumValue={1}
 	maximumValue={100}
 	value={flushToDiskInterval}
@@ -144,7 +144,7 @@ styles = StyleSheet.create({
 		fontSize: 18,
 		color: Colors.BLACK,
 		textAlign: 'center',
-	},	
+	},
 	textSmall: {
 		fontSize: 16,
 		color: Colors.BLACK,
@@ -175,20 +175,20 @@ styles = StyleSheet.create({
 		width: 60,
 		borderWidth: 1,
 		textAlign: 'center',
-	}
+	},
 });
 
-const { 
-	container, 
+const {
+	container,
 	button,
-	buttonText, 
-	text, 
+	buttonText,
+	text,
 	textSmall,
 	scrollView,
 	formButtons,
 	slider,
 	sliderText,
-	textInput
+	textInput,
 } = styles;
 
 function mapStateToProps(state) {

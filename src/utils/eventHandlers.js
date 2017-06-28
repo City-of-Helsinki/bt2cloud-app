@@ -52,7 +52,6 @@ const Handlers = {
 		if (AppState.currentState === 'active') {
 			Toast.showShortCenter('Connected to ' + deviceID);
 		}
-		console.log('Connected to ' + deviceID);
     let hasAutoNotify = state.ble.knownPeripherals.filter(p=>p.autoNotify === true & p.id === deviceID);
     if (hasAutoNotify.length !== 0 && !state.ble.startingAutoNotify) {
       // Dirty hack. Prevents 2 concurrent retrieveServices native calls
@@ -77,8 +76,6 @@ const Handlers = {
 			Vibration.vibrate();
 		}
 
-		console.log('notifying chars: ' + notifyingChars);
-
 		// TODO REMOVE ALL NOTIFYING CHARS FROM STATE ON DISCONNECT
 		let disconnectedDevicesChars = notifyingChars.filter(c=>c.deviceID === deviceID)
 			.map(ch=>ch.characteristic);
@@ -101,7 +98,6 @@ const Handlers = {
 	},
 
 	handleNotification(data) {
-		console.log('handleNotification');
 		if (!data) return;
 		let deviceID = data.peripheral;
 		let characteristic = data.characteristic
@@ -127,7 +123,6 @@ const Handlers = {
 
 	handleScanEnded() {
 		//store.dispatch(getAvailablePeripherals(BleManager));
-		console.log(store.getState().ble.startScanByDefault);
 		store.dispatch(bleScanEnded(BleManager, store.getState().ble.startScanByDefault));
 	},
 
@@ -140,7 +135,6 @@ const Handlers = {
 			let connecting = connectingPeripherals.includes(per.id);
 
 			if (inRange && !connected && !connecting) {
-				console.log('attempting to autoconnect');
 				let hasAutoConnect = true;
 				store.dispatch(bleConnecting(per));
 				store.dispatch(bleConnect(BleManager, realm, per, hasAutoConnect));
@@ -150,13 +144,10 @@ const Handlers = {
 
 	handleAutoNotify(deviceID) {
 		// If device is set to autoNotify in DB, start notify on all notify-able chars
-    console.log('handleAutoNotify ' + deviceID);
     let state = store.getState();
     try {
 		BleManager.retrieveServices(deviceID)
 			.then((data)=>{
-				console.log('handleautonotify promise resolves');
-				console.log('data: ' + data);
 				if (!data.characteristics) return;
 				let notifyableChars = data.characteristics.filter((c)=>{
 					return c.properties.hasOwnProperty('Notify') && c.properties.Notify === 'Notify';

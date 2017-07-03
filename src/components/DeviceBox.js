@@ -5,6 +5,7 @@ import {
 	TouchableHighlight,
 	StyleSheet,
 	ActivityIndicator,
+	LayoutAnimation,
 } from 'react-native';
 
 import Icon from 'react-native-vector-icons/FontAwesome';
@@ -12,6 +13,10 @@ import Icon from 'react-native-vector-icons/FontAwesome';
 class DeviceBox extends Component {
 	constructor(props){
 		super(props);
+	}
+
+	componentWillReceiveProps(nextProps) {
+		LayoutAnimation.configureNext(LayoutAnimation.Presets.spring);
 	}
 
 	render() {

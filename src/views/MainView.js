@@ -17,6 +17,7 @@ import Colors from '../colors';
 import {
 	FILE_TAG_GPS,
 	GPS_OPTIONS,
+  ACTIVE_VIEW_CHANGED,
 } from '../constants';
 
 class MainView extends Component {
@@ -35,10 +36,17 @@ class MainView extends Component {
 	}
 
 	render() {
-		console.log('mainView render');
+    const tabs = [
+      'ScanView',
+      'BackendsView',
+      'SettingsView',
+    ];
 	  return (
 	  	<View style={{flex: 1}}>
-		    <ScrollableTabView renderTabBar={() => <TabBar />}>
+		    <ScrollableTabView
+          renderTabBar={() => <TabBar />}
+          onChangeTab={(tab) => { this.props.activeViewChanged(tabs[tab.i]); }}
+        >
 		      <ScanView tabLabel="Nearby devices" />
 		      <BackendsView tabLabel="Backends" />
 		      <SettingsView tabLabel="App Settings" />
@@ -60,6 +68,10 @@ function mapStateToProps(state) {
 
 function mapDispatchToProps(dispatch) {
   return {
+    activeViewChanged: (view) => dispatch({
+      type: ACTIVE_VIEW_CHANGED,
+      activeView: view,
+    }),
   };
 }
 

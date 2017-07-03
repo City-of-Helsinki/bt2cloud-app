@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-import { View, StyleSheet } from 'react-native';
+import { View, StyleSheet, UIManager, Platform } from 'react-native';
 import { Scene, Router } from 'react-native-router-flux';
 
 import { connect } from 'react-redux';
@@ -10,6 +10,12 @@ import SplashScreen from './views/SplashScreen';
 import DeviceInfo from 'react-native-device-info';
 
 import { getDeviceInfo } from './actions/actions';
+import { ACTIVE_VIEW_CHANGED } from './constants';
+
+if (Platform.OS === 'android') {
+	UIManager.setLayoutAnimationEnabledExperimental
+		&& UIManager.setLayoutAnimationEnabledExperimental(true);
+}
 
 class App extends Component {
 
@@ -19,17 +25,18 @@ class App extends Component {
 
 	componentDidMount() {
 		this.props.getDeviceInfo(DeviceInfo);
+		this.props.activeViewChanged('ScanView');
 	}
 
 	render() {
-		let { initializing } = this.props.settings;
+		let { initializing } = this.props;
 		function renderSplashOrMain() {
 			if (initializing) {
 				return <SplashScreen />;
 			}
 			else {
 				return (
-					<Router>
+					<Router onBack={() => { this.props.activeViewChanged('ScanView'); }}>
 						<Scene key="root" titleStyle={navBarTitle} navigationBarStyle={navBar}>
 							<Scene key="MainView" component={MainView} title="BT2CLOUD" />
 							<Scene key="DeviceDetailView" component={DeviceDetailView} title="BT2CLOUD" />
@@ -65,13 +72,17 @@ const {
 
 function mapStateToProps(state) {
   return {
-  	settings: state.settings,
+  	initializing: state.settings.initializing,
   };
 }
 
 function mapDispatchToProps(dispatch) {
   return {
     getDeviceInfo: (DeviceInfo) => dispatch(getDeviceInfo(DeviceInfo)),
+    activeViewChanged: (view) => dispatch({
+    	type: ACTIVE_VIEW_CHANGED,
+    	activeView: view,
+    }),
   };
 }
 

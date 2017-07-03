@@ -67,7 +67,7 @@ export function bleScanStart(BleManager) {
   return (dispatch) => {
     dispatch({type: BLE_SCAN_STARTING});
     console.log('SCAN STARTING');
-    BleManager.scan([], 3600)
+    BleManager.scan([], 10)
       .then(() => {
         dispatch(bleScanStartResult());
       })

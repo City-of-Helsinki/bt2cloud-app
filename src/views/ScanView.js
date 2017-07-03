@@ -40,7 +40,8 @@ import {
 } from '../actions/actions';
 
 import {
-	FILE_TAG_DATA
+	FILE_TAG_DATA,
+	ACTIVE_VIEW_CHANGED,
 } from '../constants';
 
 import eventHandlers from '../utils/eventHandlers';
@@ -74,6 +75,10 @@ class ScanView extends Component {
 			this.props.bleScanStart(BleManager);
 			this.props.getConnectedPeripherals(BleManager);
 		}
+	}
+
+	shouldComponentUpdate() {
+		return this.props.activeView === 'ScanView';
 	}
 
 	handleScanPress() {
@@ -117,6 +122,7 @@ class ScanView extends Component {
 		if (!device) return;
 		BleManager.retrieveServices(device.id)
 			.then((s) => {
+				this.props.activeViewChanged('DeviceDetailView');
 				Actions.DeviceDetailView({
 					title: device.name,
 					device: s,
@@ -300,7 +306,8 @@ const {
 
 function mapStateToProps(state) {
   return {
-    ble: state.ble
+    ble: state.ble,
+    activeView: state.activeView.activeView,
   };
 }
 
@@ -324,6 +331,10 @@ function mapDispatchToProps(dispatch) {
     bleNotifyStopped: (characteristic) => dispatch(bleNotifyStopped(characteristic)),
     bleModifyDevice: (realm, device, favorite, autoConnect, autoNotify) =>
     	dispatch(bleModifyDevice(realm, device, favorite, autoConnect, autoNotify)),
+    activeViewChanged: (view) => dispatch({
+    	type: ACTIVE_VIEW_CHANGED,
+    	activeView: view,
+    }),
   };
 }
 

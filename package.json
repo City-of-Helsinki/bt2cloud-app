@@ -12,7 +12,7 @@
     "moment": "2.18.1",
     "react": "16.0.0-alpha.6",
     "react-native": "0.44.0",
-    "react-native-background-job": "git+https://github.com/vikeri/react-native-background-job.git#938e9e068407fe9c8cdf9791fa12811d202b4b18",
+    "react-native-background-job": "git+https://github.com/jussisaurio/react-native-background-job.git#cadfb57d8e7732b77b9e3aff1033b300257705f0",
     "react-native-background-timer": "1.0.2",
     "react-native-ble-manager": "git+https://github.com/innoveit/react-native-ble-manager.git#7ad211e40724fa45116c478db1b2b8cc67328cd1",
     "react-native-device-info": "0.10.2",

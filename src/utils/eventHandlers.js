@@ -6,7 +6,7 @@ import Toast from '@remobile/react-native-toast';
 import { AppState, Vibration } from 'react-native';
 import store from '../store';
 
-import { FILE_TAG_DATA } from '../constants';
+import { FILE_TAG_DATA, BLUETOOTH_BASE_UUID } from '../constants';
 
 import {
 	bleStart,
@@ -99,9 +99,26 @@ const Handlers = {
 
 	handleNotification(data) {
 		if (!data) return;
+		console.log(data);
 		let deviceID = data.peripheral;
-		let characteristic = data.characteristic
-		let service = data.service
+		let characteristic = data.characteristic;
+		let service = data.service;
+
+		// Some services and chars can have a 16-bit UUID.
+		// in case notification sends a 128-bit UUID that has been composed of the original 16-bit UUID and
+		// Bluetooth Base UUID, replace the signifying 4 digits with zeros and compare it to BT-Base UUID.
+		// If there's a match, save the 16-bit UUID in the data entry, so that it matches
+		// the 16-bit UUID that the device services list contains.
+		if (characteristic.length > 8) {
+			let charBaseUuidComparison = (characteristic.substr(0,4) + '0000' + characteristic.substr(8)).toUpperCase(); 
+			if (charBaseUuidComparison === BLUETOOTH_BASE_UUID) characteristic = characteristic.substr(4,4);
+		}
+
+		if (service.length > 8) {
+			let serviceBaseUuidComparison = (service.substr(0,4) + '0000' + service.substr(8)).toUpperCase(); 
+			if (serviceBaseUuidComparison === BLUETOOTH_BASE_UUID) service = service.substr(4,4);
+		}
+
 		let hex = Array.isArray(data.value) ? '' : data.value;
 		let ascii = Array.isArray(data.value) ? Utils.byteToText(data.value) : Utils.hexDecode(data.value);
     let jsonObject = {
@@ -160,6 +177,7 @@ const Handlers = {
           return !notifying && connected;
         });
         let sendCharArray = charArray.slice();
+        console.log(sendCharArray);
         if (charArray.length > 0) store.dispatch(bleNotify(BleManager, deviceID, sendCharArray));
 		})
     .catch((err) => {

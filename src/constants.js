@@ -58,3 +58,46 @@ export const SECONDARY_LOCATION_OPTIONS = {
 	timeout: 50000,
 	maximumAge: 0,
 };
+
+// https://www.bluetooth.com/specifications/assigned-numbers/service-discovery
+export const BLUETOOTH_BASE_UUID = '00000000-0000-1000-8000-00805F9B34FB';
+
+// https://www.bluetooth.com/specifications/gatt/services
+export const GATT_SERVICES = [
+	{ uuid: '1811', description: 'Alert Notification Service' },
+	{ uuid: '1815', description: 'Automation IO' },
+	{ uuid: '180F', description: 'Battery Service' },
+	{ uuid: '1810', description: 'Blood Pressure' },
+	{ uuid: '181B', description: 'Body Composition' },
+	{ uuid: '181E', description: 'Bond Management' },
+	{ uuid: '181F', description: 'Continuous Glucose Monitoring' },
+	{ uuid: '1805', description: 'Current Time Service' },
+	{ uuid: '1818', description: 'Cycling Power' },
+	{ uuid: '1816', description: 'Cycling Speed and Cadence' },
+	{ uuid: '180A', description: 'Device Information' },
+	{ uuid: '181A', description: 'Environmental Sensing' },
+	{ uuid: '1826', description: 'Fitness Machine' },
+	{ uuid: '1800', description: 'Generic Access' },
+	{ uuid: '1801', description: 'Generic Attribute' },
+	{ uuid: '1808', description: 'Glucose' },
+	{ uuid: '1809', description: 'Health Thermometer' },
+	{ uuid: '180D', description: 'Heart Rate' },
+	{ uuid: '1823', description: 'HTTP Proxy' },
+	{ uuid: '1812', description: 'Human Interface Device' },
+	{ uuid: '1802', description: 'Immediate Alert' },
+	{ uuid: '1821', description: 'Indoor Positioning' },
+	{ uuid: '1820', description: 'Internet Protocol Support' },
+	{ uuid: '1803', description: 'Link Loss' },
+	{ uuid: '1819', description: 'Location and Navigation' },
+	{ uuid: '1807', description: 'Next DST Change Service' },
+	{ uuid: '1825', description: 'Object Transfer' },
+	{ uuid: '180E', description: 'Phone Alert Status Service' },
+	{ uuid: '1822', description: 'Pulse Oximeter' },
+	{ uuid: '1806', description: 'Reference Time Update Service' },
+	{ uuid: '1814', description: 'Running Speed and Cadence' },
+	{ uuid: '1813', description: 'Scan Parameters' },
+	{ uuid: '1824', description: 'Transport Discovery' },
+	{ uuid: '1804', description: 'Tx Power' },
+	{ uuid: '181C', description: 'User Data' },
+	{ uuid: '181D', description: 'Weight Scale' },
+];

@@ -40,14 +40,12 @@ lastPosition = null, GPSTrigger = null;
 
 // watch for both accurate and coarse location and update whichever successfully provides location
 const watchID_secondary = navigator.geolocation.watchPosition((position) => {
-  	console.log('successfully got watched secondary provider location', position);
   	lastPosition = position.coords;
   },
     (error) => {
     	console.log(error)
     }, SECONDARY_LOCATION_OPTIONS);
 const watchID = navigator.geolocation.watchPosition((position) => {
-  	console.log('successfully got watched GPS location', position);
   	lastPosition = position.coords;
   },
     (error) => {

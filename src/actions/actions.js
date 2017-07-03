@@ -185,7 +185,6 @@ export function bleDisconnect(BleManager, device) {
 // REFRESH AVAILABLE PERIPHERALS
 export function getAvailablePeripherals(BleManager) {
   return (dispatch) => {
-    console.log('getAvailablePeripherals');
     BleManager.getDiscoveredPeripherals([])
       .then((peripherals) => {
         dispatch(bleUpdateAvailablePeripherals(null, peripherals));
@@ -254,7 +253,6 @@ export function bleRead(store, BleManager, realm, Utils, deviceID, service, char
     if (!deviceID || !service || !characteristic) return;
     BleManager.read(deviceID, service, characteristic)
       .then((data)=> {
-        console.log(data);
         let jsonObject = {
           deviceID,
           service,
@@ -306,12 +304,15 @@ export function bleNotifyStopped(characteristic) {
 
 export function bleNotify(BleManager, deviceID, charArray) {
   return (dispatch) => {
+    console.log('bleNotify');
     BleManager.startNotification(deviceID, charArray[0].service, charArray[0].characteristic)
       .then(()=> {
         console.log('Notify started for ' + charArray[0].characteristic);
         dispatch(bleNotifyStarted(deviceID, charArray[0]));
         charArray.splice(0,1);
-        if (charArray.length > 0) bleNotify(charArray);
+        if (charArray.length > 0) {
+            dispatch(bleNotify(BleManager, deviceID, charArray));
+        }
       })
       .catch((error)=>{
         console.log(error);
@@ -326,7 +327,7 @@ export function bleNotifyStop(BleManager, deviceID, charArray) {
       .then(()=> {
         dispatch(bleNotifyStopped(charArray[0].characteristic))
         charArray.splice(0,1);
-        if (charArray.length > 0) bleNotifyStop(charArray);
+        if (charArray.length > 0) dispatch(bleNotifyStop(BleManager, deviceID, charArray));
       })
       .catch((error)=>{
         console.log(error);

@@ -185,9 +185,9 @@ class DeviceDetailView extends Component {
 									let read = c.properties.hasOwnProperty('Read') && c.properties.Read === 'Read';
 									let notify = c.properties.hasOwnProperty('Notify') && c.properties.Notify === 'Notify';
 									let newestValue = Utils.convertRealmResultsToArray(realm.objects('Data')
-										.filtered('characteristic == "' + c.characteristic +'"').slice(-1))[0];
+										.filtered('deviceID = "' + device.id + '" AND characteristic == "' + c.characteristic +'"').slice(-1))[0];
 									let valueCount = realm.objects('Data')
-										.filtered('characteristic == "' + c.characteristic +'"').length;
+										.filtered('deviceID = "' + device.id + '" AND characteristic == "' + c.characteristic +'"').length;
 									let notifying = notifyingChars.map(ch=>ch.characteristic).includes(c.characteristic);
 									
 									// human readable description of the characteristic (e.g. measures air quality)

@@ -78,7 +78,6 @@ class ScanView extends Component {
 
 	handleScanPress() {
 		let { scanning } = this.props.ble;
-		console.log('scan button press, current scanning status: ' + scanning);
 		if (scanning) {
 			this.props.bleScanStop(BleManager);
 		}
@@ -148,7 +147,6 @@ class ScanView extends Component {
 		let { started, startError, scanning, scanError, peripherals, connectedPeripherals,
 			connectingPeripherals, knownPeripherals, connectError } = this.props.ble;
 		let favoritePeripherals = knownPeripherals.filter(p=>p.favorite === true);
-		console.log('Scanview render, scanning is ' + scanning);
 		function scanText() {
 			if (scanning) return <Text style={buttonText}>Press to Stop</Text>
 			else return <Text style={buttonText}>Press to Scan</Text>

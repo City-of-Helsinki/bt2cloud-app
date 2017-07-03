@@ -7,6 +7,7 @@ import {
 } from 'react-native';
 
 import Icon from 'react-native-vector-icons/FontAwesome';
+import { GATT_SERVICES } from '../constants';
 
 class ServiceBox extends Component {
 	constructor(props){
@@ -23,6 +24,9 @@ class ServiceBox extends Component {
 	}
 
 	render() {
+		const findStandardizedService = GATT_SERVICES.filter(s => s.uuid === this.props.uuid.toUpperCase());
+		let standardizedService = null;
+		if (findStandardizedService) standardizedService = findStandardizedService[0];
 		let arrowIcon = this.state.collapsed ? 'angle-up' : 'angle-down';
 		return (
 			<View>
@@ -33,10 +37,10 @@ class ServiceBox extends Component {
 					</View>
 					<View style={contentContainer}>
 					<Text style={text}>
-						SERVICE ID:
+						{standardizedService ? 'SERVICE TYPE:' : 'CUSTOM SERVICE, ID:'}
 					</Text>
 					<Text style={textSmall}>
-						{this.props.uuid}
+						{standardizedService ? standardizedService.description : this.props.uuid}
 					</Text>
 					</View>
 						<TouchableHighlight onPress={this.infoPress} style={iconContainer}>

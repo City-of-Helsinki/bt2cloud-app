@@ -99,7 +99,6 @@ const Handlers = {
 
 	handleNotification(data) {
 		if (!data) return;
-		console.log(data);
 		let deviceID = data.peripheral;
 		let characteristic = data.characteristic;
 		let service = data.service;
@@ -177,7 +176,6 @@ const Handlers = {
           return !notifying && connected;
         });
         let sendCharArray = charArray.slice();
-        console.log(sendCharArray);
         if (charArray.length > 0) store.dispatch(bleNotify(BleManager, deviceID, sendCharArray));
 		})
     .catch((err) => {

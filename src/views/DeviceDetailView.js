@@ -69,12 +69,13 @@ class DeviceDetailView extends Component {
 	handleConnectPress() {
 		let { device } = this.props;
 		let connected = this.props.ble.connectedPeripherals.map(p=>p.id).includes(device.id);
+		let hasAutoConnect = this.props.ble.knownPeripherals.filter(p=>p.autoConnect === true & p.id === device.id);
 		if (connected) {
 			this.props.bleDisconnect(BleManager, device); 
 		}
 		else {
 			this.props.bleConnecting(device);
-			this.props.bleConnect(BleManager, realm, device);
+			this.props.bleConnect(BleManager, realm, device, hasAutoConnect);
 		}	
 	}
 

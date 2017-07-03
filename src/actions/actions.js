@@ -162,10 +162,10 @@ export function bleConnect(BleManager, realm, device, hasAutoConnect) {
       })
       .catch((err) => {
         dispatch(bleConnectError(device, err));
-        /*if (hasAutoConnect) {
+        if (hasAutoConnect) {
           dispatch(bleConnecting(device));
           dispatch(bleConnect(BleManager, realm, device, hasAutoConnect));
-        }*/
+        }
       })
   }
 }

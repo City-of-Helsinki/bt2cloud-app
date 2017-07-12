@@ -52,11 +52,13 @@ export const GPS_OPTIONS = {
 	enableHighAccuracy: true,
 	timeout: 50000,
 	maximumAge: 0,
+	distanceFilter: 1,
 };
 export const SECONDARY_LOCATION_OPTIONS = {
 	enableHighAccuracy: false,
 	timeout: 50000,
 	maximumAge: 0,
+	distanceFilter: 1,
 };
 
 // https://www.bluetooth.com/specifications/assigned-numbers/service-discovery

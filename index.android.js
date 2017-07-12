@@ -5,6 +5,7 @@ import {
 } from 'react-native';
 
 import BGTimer from 'react-native-background-timer';
+import moment from 'moment';
 import { Provider } from 'react-redux';
 import store from './src/store';
 import App from './src/app';
@@ -36,17 +37,17 @@ NativeAppEventEmitter
 			.addListener('BleManagerDidUpdateValueForCharacteristic', eventHandlers.handleNotification);
 
 // GPS EVENT HANDLERS... todo move to separate module because global variables are BAAAAAAAAAAAD.
-lastPosition = null, GPSTrigger = null;
+newestPosition = null, previousPosition = null, GPSTrigger = null;
 
 // watch for both accurate and coarse location and update whichever successfully provides location
 const watchID_secondary = navigator.geolocation.watchPosition((position) => {
-  	lastPosition = position.coords;
+  	newestPosition = position;
   },
     (error) => {
     	console.log(error)
     }, SECONDARY_LOCATION_OPTIONS);
 const watchID = navigator.geolocation.watchPosition((position) => {
-  	lastPosition = position.coords;
+  	newestPosition = position;
   },
     (error) => {
     	console.log(error)
@@ -55,13 +56,16 @@ const watchID = navigator.geolocation.watchPosition((position) => {
 setGPSTrigger = (interval) => {
   GPSTrigger = BGTimer.setInterval(()=>{
   	try {
-  		if (lastPosition) {
+  		if ((newestPosition && !previousPosition) || (newestPosition && previousPosition && newestPosition.timestamp !== previousPosition.timestamp)) {
+        console.log(newestPosition);
+        previousPosition = newestPosition;
+        console.log(moment(newestPosition.timestamp).format("YYYY-MM-DD-HH:mm:ss"));
     		let gps = {
-    			lat: lastPosition.latitude,
-    			lon: lastPosition.longitude,
-    			acc: lastPosition.accuracy.toFixed(3),
-    			alt: lastPosition.altitude,
-    			time: new Date(),
+    			lat: newestPosition.coords.latitude,
+    			lon: newestPosition.coords.longitude,
+    			acc: newestPosition.coords.accuracy.toFixed(3),
+    			alt: newestPosition.coords.altitude,
+    			time: moment(newestPosition.timestamp).format("YYYY-MM-DD-HH:mm:ss"),
     		}
     		Utils.writeToFile(store, gps, FILE_TAG_GPS);
   		}

@@ -39,12 +39,12 @@ NativeAppEventEmitter
 lastPosition = null, GPSTrigger = null;
 
 // watch for both accurate and coarse location and update whichever successfully provides location
-const watchID_secondary = navigator.geolocation.watchPosition((position) => {
-  	lastPosition = position.coords;
-  },
-    (error) => {
-    	console.log(error)
-    }, SECONDARY_LOCATION_OPTIONS);
+// const watchID_secondary = navigator.geolocation.watchPosition((position) => {
+//   	lastPosition = position.coords;
+//   },
+//     (error) => {
+//     	console.log(error)
+//     }, SECONDARY_LOCATION_OPTIONS);
 const watchID = navigator.geolocation.watchPosition((position) => {
   	lastPosition = position.coords;
   },

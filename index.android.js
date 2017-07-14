@@ -37,35 +37,60 @@ NativeAppEventEmitter
 			.addListener('BleManagerDidUpdateValueForCharacteristic', eventHandlers.handleNotification);
 
 // GPS EVENT HANDLERS... todo move to separate module because global variables are BAAAAAAAAAAAD.
-newestPosition = null, previousPosition = null, GPSTrigger = null;
+newestPosition = null, newestAccuratePosition = null, newestCoarsePosition = null, previousPosition = null, GPSTrigger = null;
 
 // watch for both accurate and coarse location and update whichever successfully provides location
 const watchID_secondary = navigator.geolocation.watchPosition((position) => {
-  	newestPosition = position;
-  },
-    (error) => {
-    	console.log(error)
-    }, SECONDARY_LOCATION_OPTIONS);
+	newestCoarsePosition = position;
+  newestCoarsePosition.provider = 'cell/wifi';
+},
+(error) => {
+	console.log(error)
+}, SECONDARY_LOCATION_OPTIONS);
 const watchID = navigator.geolocation.watchPosition((position) => {
-  	newestPosition = position;
-  },
-    (error) => {
-    	console.log(error)
-    }, GPS_OPTIONS);
+	newestAccuratePosition = position;
+  newestAccuratePosition.provider = 'gps';
+},
+(error) => {
+	console.log(error)
+}, GPS_OPTIONS);
 
 setGPSTrigger = (interval) => {
   GPSTrigger = BGTimer.setInterval(()=>{
   	try {
+      let time_difference;
+      
+      // Received exclusively accurate (GPS) location information
+      if (newestAccuratePosition && !newestCoarsePosition) {
+        newestPosition = newestAccuratePosition;
+      }
+      // Received exclusively inaccurate (cell/wifi) location information
+      else if (!newestAccuratePosition && newestCoarsePosition) {
+        newestPosition = newestCoarsePosition;
+      }
+      // Received both; check how old the last GPS location is and determine whether
+      // to use the coarse location or not
+      else if (newestAccuratePosition && newestCoarsePosition) {
+        
+        time_difference = newestCoarsePosition.timestamp - newestAccuratePosition.timestamp;
+        
+        if (time_difference > (store.getState().settings.GPSInterval * 1000)) {
+          newestPosition = newestCoarsePosition;
+        } else {
+          newestPosition = newestAccuratePosition;
+        }
+      }
+      
+      // Don't record location data if it hasn't been updated since the last write (based on timestamp)
   		if ((newestPosition && !previousPosition) || (newestPosition && previousPosition && newestPosition.timestamp !== previousPosition.timestamp)) {
-        console.log(newestPosition);
         previousPosition = newestPosition;
-        console.log(moment(newestPosition.timestamp).format("YYYY-MM-DD-HH:mm:ss"));
     		let gps = {
     			lat: newestPosition.coords.latitude,
     			lon: newestPosition.coords.longitude,
     			acc: newestPosition.coords.accuracy.toFixed(3),
     			alt: newestPosition.coords.altitude,
     			time: moment(newestPosition.timestamp).format("YYYY-MM-DD-HH:mm:ss"),
+          provider: newestPosition.provider,
     		}
     		Utils.writeToFile(store, gps, FILE_TAG_GPS);
   		}

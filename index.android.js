@@ -89,7 +89,7 @@ setGPSTrigger = (interval) => {
     			lon: newestPosition.coords.longitude,
     			acc: newestPosition.coords.accuracy.toFixed(3),
     			alt: newestPosition.coords.altitude,
-    			time: moment(newestPosition.timestamp).format("YYYY-MM-DD-HH:mm:ss"),
+    			time: new Date(newestPosition.timestamp),
           provider: newestPosition.provider,
     		}
     		Utils.writeToFile(store, gps, FILE_TAG_GPS);
